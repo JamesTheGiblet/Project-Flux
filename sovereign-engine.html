@@ -380,57 +380,57 @@ player.color = '#ffff00';</code></pre>
                 alert('Please enter a name for your preset.');
                 return;
             }
-            // Prevent overwriting a file-based mod
-            if (modManifest[modType] && modManifest[modType][presetName]) {
-                alert(`Cannot overwrite a file-
+			// Prevent overwriting a file-based mod
+			if (modManifest[modType] && modManifest[modType][presetName]) {
+                alert(`Cannot overwrite a file-based mod preset.`);
                 return;
             }
 
-            const storageKey = `sovereign_${modType}_mods`;
-            let customMods = JSON.parse(localStorage.getItem(storageKey)) || {};
-            customMods[presetName] = code;
-            localStorage.setItem(storageKey, JSON.stringify(customMods));
+	const storageKey = `sovereign_${modType}_mods`;
+	let customMods = JSON.parse(localStorage.getItem(storageKey)) || {};
+	customMods[presetName] = code;
+	localStorage.setItem(storageKey, JSON.stringify(customMods));
 
-            alert(`Preset "${presetName}" saved!`);
-            nameInput.value = '';
-            initializeModSystem();
-            selectPreset(modType, presetName);
-        }
+	alert(`Preset "${presetName}" saved!`);
+	nameInput.value = '';
+	initializeModSystem();
+	selectPreset(modType, presetName);
+}
 
-        function executeHack() {
-            const code = document.getElementById('hackCode').value;
-            if (!code) return; // Don't run empty code
-            try {
-                // The code is executed with 'game', 'player', and 'engine' available as variables.
-                const hackFunction = new Function('game', 'player', 'engine', code);
-                hackFunction(game, game.player, game);
-                console.log('%c⚡ Hack executed successfully!', 'color: #00ffff');
-            } catch (e) {
-                alert('Error in hack code: ' + e.message);
-                console.error('Hack execution failed:', e);
-            }
-        }
+function executeHack() {
+	const code = document.getElementById('hackCode').value;
+	if (!code) return; // Don't run empty code
+	try {
+		// The code is executed with 'game', 'player', and 'engine' available as variables.
+		const hackFunction = new Function('game', 'player', 'engine', code);
+		hackFunction(game, game.player, game);
+		console.log('%c⚡ Hack executed successfully!', 'color: #00ffff');
+	} catch (e) {
+		alert('Error in hack code: ' + e.message);
+		console.error('Hack execution failed:', e);
+	}
+}
 
-        function initializeModSystem() {
-            game.allPresets = { weapon: {}, rule: {}, player: {} };
-            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets };
+function initializeModSystem() {
+	game.allPresets = { weapon: {}, rule: {}, player: {} };
+	const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets };
 
-            for (const modType in game.allPresets) {
-                const customMods = JSON.parse(localStorage.getItem(`sovereign_${modType}_mods`)) || {};
-                game.allPresets[modType] = { ...defaultPresets[modType], ...customMods };
+	for (const modType in game.allPresets) {
+		const customMods = JSON.parse(localStorage.getItem(`sovereign_${modType}_mods`)) || {};
+		game.allPresets[modType] = { ...defaultPresets[modType], ...customMods };
 
-                const selector = document.getElementById(`${modType}Selector`);
-                selector.innerHTML = ''; // Clear dropdown
+		const selector = document.getElementById(`${modType}Selector`);
+		selector.innerHTML = ''; // Clear dropdown
 
-                for (const presetName in game.allPresets[modType]) {
-                    const option = document.createElement('option');
-                    option.value = presetName;
-                    const isCustom = !defaultPresets[modType].hasOwnProperty(presetName);
-                    option.textContent = isCustom ? `[C] ${presetName}` : presetName.charAt(0).toUpperCase() + presetName.slice(1);
-                    selector.appendChild(option);
-                }
-            }
-        }
+		for (const presetName in game.allPresets[modType]) {
+			const option = document.createElement('option');
+			option.value = presetName;
+			const isCustom = !defaultPresets[modType].hasOwnProperty(presetName);
+			option.textContent = isCustom ? `[C] ${presetName}` : presetName.charAt(0).toUpperCase() + presetName.slice(1);
+			selector.appendChild(option);
+		}
+	}
+}
         
 		let game;
 		window.onload = function() {
@@ -444,14 +444,14 @@ player.color = '#ffff00';</code></pre>
 			applyMod('rule');
 			applyMod('player');
 
-			console.log(`
-🚀 SOVEREIGN ENGINE LOADED
+			console.log(
+`🚀 SOVEREIGN ENGINE LOADED
 =======================
 WASD/Arrows: Move
 Mouse: Aim | Click/Space: Shoot
 Edit code in the panel →
-Every system is hackable!
-`);
+Every system is hackable!`
+			);
 		};
 	</script>
 </body>
