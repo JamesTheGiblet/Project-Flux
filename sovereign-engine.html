@@ -335,10 +335,8 @@ player.color = '#ffff00';</code></pre>
 	</div>
 
 	<script src="engine.js"></script>
-	<script src="weapons.js"></script>
-	<script src="rules.js"></script>
-	<script src="player.js"></script>
 	<script src="power-ups.js"></script>
+	<script src="mod-loader.js"></script>
 	<script>
 		// --- MOD SYSTEM ---
 
@@ -382,8 +380,9 @@ player.color = '#ffff00';</code></pre>
                 alert('Please enter a name for your preset.');
                 return;
             }
-            if (presetName === 'default') {
-                alert('Cannot overwrite the "default" preset.');
+            // Prevent overwriting a file-based mod
+            if (modManifest[modType] && modManifest[modType][presetName]) {
+                alert(`Cannot overwrite a file-
                 return;
             }
 

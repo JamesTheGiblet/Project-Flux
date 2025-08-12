@@ -60,11 +60,10 @@ The engine is designed for live modification directly in the browser. The "How t
 4. **Apply Your Changes:** Click the "Apply" button for that section. Your changes will take effect instantly in the game.
 5. **Save Your Creation:** If you create something you love, give it a name in the input field at the bottom of the section and click "💾 Save". It will be saved to your browser's `localStorage` and will appear in the dropdown menu next time you load the game.
 
-### 🔫 Weapon Mod Example
+## 🔫 Weapon Mod Example
 
 The weapon mod is a function with the signature `function shoot(player, target, engine)`. To create a new projectile, you add an object to the `engine.projectiles` array.
 
-```javascript
 // Paste this into the WEAPON MOD editor to create a 3-shot burst fire weapon.
 const dx = target.x - player.x;
 const dy = target.y - player.y;
@@ -73,22 +72,20 @@ const speed = 400;
 
 for (let i = 0; i < 3; i++) {
   setTimeout(() => {
-    const spread = (Math.random() - 0.5) * 0.1;
+    const spread = (Math.random() - 0.5) *0.1;
     engine.projectiles.push({
       x: player.x, y: player.y,
-      vx: Math.cos(angle + spread) * speed,
-      vy: Math.sin(angle + spread) * speed,
+      vx: Math.cos(angle + spread)*speed,
+      vy: Math.sin(angle + spread) *speed,
       size: 3, color: '#ff55ff', life: 1.5
     });
-  }, i * 80); // 80ms delay between shots
+  }, i* 80); // 80ms delay between shots
 }
-```
 
 ### 🎮 Rules Mod Example
 
 The rules mod is a function that runs every frame: `function update(engine, dt)`. You can use it to control enemy spawning, difficulty, or any other global game logic.
 
-```javascript
 // Paste this into the RULES MOD editor to spawn bosses every 15 seconds.
 if (engine.gameTime > (engine.lastBossTime || 0) + 15) {
   engine.spawnEnemy({
@@ -99,7 +96,6 @@ if (engine.gameTime > (engine.lastBossTime || 0) + 15) {
   });
   engine.lastBossTime = engine.gameTime;
 }
-```
 
 🌐 Distribution & Sharing
 
