@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Engine - Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ccc;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(10, 10, 20, 0.8);
+            border: 1px solid #00ff88;
+            padding: 20px 40px;
+            border-radius: 5px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 15px;
+            background: #00ff88;
+            color: #000;
+            text-decoration: none;
+            border-radius: 3px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .back-link:hover {
+            background: #fff;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        h1, h2, h3 {
+            color: #00ff88;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            border-bottom: 1px solid #00ff88;
+            margin-bottom: 25px;
+        }
+        h2 {
+            font-size: 1.8em;
+            color: #ff6b00;
+            margin-top: 30px;
+            border-bottom-color: #ff6b00;
+        }
+        h3 {
+            font-size: 1.4em;
+            color: #00ffff;
+            margin-top: 25px;
+            border-bottom: none;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        code {
+            background: #1a1a1a;
+            color: #00ff88;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        pre code {
+            padding: 0;
+            background: none;
+            font-size: 1em;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        strong {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="./sovereign-engine.html" class="back-link">← Back to the Game</a>
+
+        <h1>🚀 SOVEREIGN ENGINE: Flux</h1>
+        <p><strong>Hackable. Modular. Yours. Every line of code is an invitation.</strong></p>
+        <p>Welcome to Sovereign Engine, a revolutionary game framework designed from the ground up to empower creators with unprecedented control. This isn't just an engine; it's a living manifesto for digital sovereignty, challenging the notion of software as a black box. Here, every pixel is hackable, every rule is rewritable, and every system is explicitly yours to command. Dive in, modify, and reclaim your digital creative freedom.</p>
+        
+        <h2>⚡ BUILDER'S MANIFESTO</h2>
+        <p>We believe software should be transparent, modifiable, and truly owned by its users. The Sovereign Engine is a testament to this belief. It's about refusing to accept limitations and embracing the power to reshape your digital experience. No permissions, no gatekeepers, just pure creative freedom.</p>
+        
+        <h2>✨ Core Features & Principles</h2>
+        <p>The Sovereign Engine is built on a philosophy of ultimate flexibility and immediate feedback:</p>
+        <ul>
+            <li><strong>Dependency-Injected Systems:</strong> The engine's architecture promotes modularity. Core functionalities like WeaponSystem, CharacterSystem, and RulesSystem are dependency-injected and hot-swappable. This means you can completely replace or augment how weapons fire, how characters behave, or how game rules function without touching the engine's core.</li>
+            <li><strong>No Build Step:</strong> Forget compilers, bundlers, and complex development environments. With Sovereign Engine, it's about speed and direct interaction. Edit, save, refresh. That's it. Your changes are instantly reflected in the game, allowing for rapid iteration and experimentation.</li>
+            <li><strong>No Licensing:</strong> This project is intentionally placed in the Public Domain (or uses a highly permissive MIT License). You are free to fork, use, modify, and redistribute the engine and any mods without asking for permission or worrying about restrictive terms. It's truly yours.</li>
+            <li><strong>No Servers:</strong> The engine is designed to run independently. It operates offline and can be hosted anywhere—whether on your local machine, a simple HTTP server, IPFS, or GitHub Pages. Your game, your data, your distribution.</li>
+            <li><strong>No Limits:</strong> If you can code it in JavaScript, you can mod it. The engine's design explicitly exposes its internal workings, providing you with the tools to implement anything from custom particle effects and AI behaviors to entirely new game mechanics and procedural generation systems.</li>
+        </ul>
+        
+        <h2>🛠️ Ready-to-Hack Presets</h2>
+        <p>To demonstrate the power of the Sovereign Engine, it ships with working example mods that showcase its core philosophy in action:</p>
+        <ul>
+            <li><strong>Pistol → Shotgun:</strong> Instantly switch from a single-shot pistol to a multi-projectile shotgun. The code for both is available in the editor, showing how different firing logic can be implemented.</li>
+            <li><strong>Default Player → Custom Build:</strong> Modify the player's core stats like speed, size, and color on the fly. Create a fast, fragile glass cannon or a slow, durable tank by editing the player mod.</li>
+            <li><strong>Default Spawner → Horde Mode:</strong> See how entire game modes can be re-defined. Switch from a standard enemy spawner to a frantic "Horde Mode" with waves of weaker enemies, all controlled by the Rules Mod.</li>
+        </ul>
+        
+        <h2>🚀 Get Started (Self-Hosting)</h2>
+        <p>Getting the Sovereign Engine up and running is designed to be as straightforward as possible:</p>
+        <ol>
+            <li><strong>Clone this repository:</strong><br>Open your terminal or command prompt and run:
+                <pre><code>git clone https://github.com/YOUR_GITHUB_USERNAME/sovereign-engine.git
+cd sovereign-engine</code></pre>
+            </li>
+            <li><strong>Serve locally (requires Python 3):</strong><br>Navigate to the cloned directory and start a simple local HTTP server:
+                <pre><code>python -m http.server 8000</code></pre>
+                <p>If you don't have Python, any other local server (e.g., Node.js <code>http-server</code>) will work.</p>
+            </li>
+            <li><strong>Open in browser:</strong><br>Open your web browser and navigate to <a href="http://localhost:8000">http://localhost:8000</a>. You should see the Sovereign Engine running, ready for your modifications!</li>
+        </ol>
+        
+        <h2>💡 How to Mod</h2>
+        <p>The engine is designed for live modification directly in the browser. The "How to Hack" panel in the UI provides a quick reference, but here's the core workflow:</p>
+        <ol>
+            <li><strong>Select a Mod Panel:</strong> Choose what you want to change: 🔫 <strong>WEAPON</strong>, 🎮 <strong>RULES</strong>, or 🧍 <strong>PLAYER</strong>.</li>
+            <li><strong>Choose a Preset:</strong> Use the dropdown menu to load existing code. This is the best way to see how things work.</li>
+            <li><strong>Edit the Code:</strong> The code for the selected preset appears in the text editor. Change it however you like!</li>
+            <li><strong>Apply Your Changes:</strong> Click the "Apply" button for that section. Your changes will take effect instantly in the game.</li>
+            <li><strong>Save Your Creation:</strong> If you create something you love, give it a name in the input field at the bottom of the section and click "💾 Save". It will be saved to your browser's <code>localStorage</code> and will appear in the dropdown menu next time you load the game.</li>
+        </ol>
+        
+        <h3>🔫 Weapon Mod Example</h3>
+        <p>The weapon mod is a function with the signature <code>function shoot(player, target, engine)</code>. To create a new projectile, you add an object to the <code>engine.projectiles</code> array.</p>
+        <pre><code>// Paste this into the WEAPON MOD editor to create a 3-shot burst fire weapon.
+const dx = target.x - player.x;
+const dy = target.y - player.y;
+const angle = Math.atan2(dy, dx);
+const speed = 400;
+
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => {
+    const spread = (Math.random() - 0.5) * 0.1;
+    engine.projectiles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(angle + spread) * speed,
+      vy: Math.sin(angle + spread) * speed,
+      size: 3, color: '#ff55ff', life: 1.5
+    });
+  }, i * 80); // 80ms delay between shots
+}</code></pre>
+        
+        <h3>🎮 Rules Mod Example</h3>
+        <p>The rules mod is a function that runs every frame: <code>function update(engine, dt)</code>. You can use it to control enemy spawning, difficulty, or any other global game logic.</p>
+        <pre><code>// Paste this into the RULES MOD editor to spawn bosses every 15 seconds.
+if (engine.gameTime > (engine.lastBossTime || 0) + 15) {
+  engine.spawnEnemy({
+    health: 200,
+    size: 20,
+    color: '#ff1111',
+    ai_type: 'chase'
+  });
+  engine.lastBossTime = engine.gameTime;
+}</code></pre>
+        
+        <h2>🌐 Distribution & Sharing</h2>
+        <p>The Sovereign Engine is designed for maximum freedom in distribution:</p>
+        <ul>
+            <li><strong>Self-Hosting:</strong> As shown above, a simple <code>git clone</code> and <code>python -m http.server</code> is all you need to host your version of the engine.</li>
+            <li><strong>IPFS Distribution:</strong> For truly uncensorable, distributed hosting, you can add your <code>sovereign-engine/</code> directory to IPFS. This makes your version of the game persistently available on the decentralized web: <pre><code>ipfs add -r sovereign-engine/</code></pre></li>
+            <li><strong>GitHub Pages:</strong> Push your repository to GitHub, and you can instantly host your game globally using GitHub Pages. Just enable it in your repository settings, and your game will be live at <code>https://YOUR_GITHUB_USERNAME.github.io/sovereign-engine/</code>.</li>
+        </ul>
+        
+        <h2>🔮 The Vision Realized</h2>
+        <p>The Sovereign Engine is more than just a game; it's a proof of concept for sovereign software. Every click in the mod panel is someone exercising digital sovereignty. Every line of code edited is someone refusing to accept software as a black box. The engine teaches by invitation: "Here's how weapons work. Here's how to change them. What will you build?"</p>
+        <p>Want to add multiplayer? Mod the network layer. Want different graphics? Mod the renderer. Want blockchain integration? Mod the state system. The architecture doesn't care what you build—it just gives you the tools and gets out of your way. This is how all software should be built: transparent, modifiable, and yours.</p>
+        
+        <h2>🤝 Contributing</h2>
+        <p>We welcome contributions from anyone who believes in the vision of sovereign software!</p>
+        <ul>
+            <li><strong>Fork the repository:</strong> Start by forking sovereign-engine on GitHub.</li>
+            <li><strong>Create your mods:</strong> Experiment, hack, and create new game mechanics, characters, or rules.</li>
+            <li><strong>Share your creations:</strong> Submit pull requests with your new mods (ideally in the <code>mods/</code> directory following the suggested community mod format) or showcase your forks in our community channels.</li>
+            <li><strong>Improve the engine:</strong> Found a bug? Have an idea for a core engine improvement? Open an issue or submit a pull request!</li>
+        </ul>
+        
+        <h2>📄 License</h2>
+        <p>This project is released under the MIT License. For full details, see the LICENSE file in this repository.</p>
+        
+        <h2>📧 Contact</h2>
+        <p>Have questions or want to connect? Reach out on [Your preferred community channel, e.g., Discord/Twitter/Email]</p>
+    </div>
+</body>
+</html>
