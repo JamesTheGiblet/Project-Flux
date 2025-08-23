@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sovereign Engine - Hackable Game Framework</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="theme-color" content="#16213e">
+<meta name="msapplication-TileColor" content="#16213e">
+<meta name="msapplication-navbutton-color" content="#16213e">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 	* { margin: 0; padding: 0; box-sizing: border-box; }
 	body {
@@ -917,6 +923,16 @@ player.color = '#ffff00';</code></pre>
 
 			document.getElementById('continueButton').addEventListener('click', () => {
 				document.getElementById('upgradeScreen').style.display = 'none';
+
+				// Clean up the game board for the next level to prevent crashes
+                game.enemies = [];
+                game.projectiles = [];
+                game.particles = [];
+                game.powerUps = [];
+                game.comboCount = 0;
+                game.comboTimer = 0;
+                game.wasBossPresent = false;
+
 				game.level++;
 				game.wave = 1;
 				game.waveState = 'INTERMISSION';
@@ -976,6 +992,19 @@ Edit code in the panel →
 Every system is hackable!
 `);
         };
+
+        // --- PWA SERVICE WORKER REGISTRATION ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered! Scope:', registration.scope);
+                })
+                .catch(err => {
+                    console.error('Service Worker registration failed:', err);
+                });
+            });
+        }
     </script>
 
 </body>

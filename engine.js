@@ -157,7 +157,7 @@ class SovereignEngine {
     }
 
     playShootSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -176,7 +176,7 @@ class SovereignEngine {
     }
 
     playExplosionSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -195,7 +195,7 @@ class SovereignEngine {
     }
 
     playPowerupSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -212,7 +212,7 @@ class SovereignEngine {
         osc.stop(time + 0.2);
     }
     playShooterSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -231,7 +231,7 @@ class SovereignEngine {
     }
 
     playPlayerHitSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -250,7 +250,7 @@ class SovereignEngine {
     }
 
     playPhaseTransitionSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -269,7 +269,7 @@ class SovereignEngine {
     }
 
     playWaveClearSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
@@ -288,7 +288,7 @@ class SovereignEngine {
     }
 
     playLevelCompleteSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
         const time = this.audioContext.currentTime;
         const osc1 = this.audioContext.createOscillator();
         const osc2 = this.audioContext.createOscillator();
@@ -311,6 +311,25 @@ class SovereignEngine {
         osc1.stop(time + 0.6);
         osc2.start(time);
         osc2.stop(time + 0.6);
+    }
+
+    playDeathSound() {
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.2, time);
+        osc.frequency.setValueAtTime(200, time);
+    
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.8);
+        osc.frequency.exponentialRampToValueAtTime(50, time + 0.8);
+    
+        osc.start(time);
+        osc.stop(time + 0.8);
     }
 
     getEnemySpawnPosition() {
@@ -639,6 +658,7 @@ class SovereignEngine {
                             this.score += enemy.isBoss ? (enemy.scoreValue || 250) : 10;
                             const explosionSize = Math.max(3, enemy.size);
                             if (enemy.isBoss) {
+                                this.playExplosionSound();
                                 // Big boss explosion
                                 this.spawnParticles(enemy.x, enemy.y, { count: 200, color: '#ff8800', speed: {min: 50, max: 500}, life: {min: 0.8, max: 2.0} });
                                 this.spawnParticles(enemy.x, enemy.y, { count: 100, color: '#ffff00', speed: {min: 50, max: 400}, life: {min: 0.5, max: 1.5} });
