@@ -55,5 +55,22 @@ const powerUpTypes = {
             });
         },
         remove: (player, engine) => {}
+    },
+    regenShield: {
+        color: '#44ccff',
+        symbol: 'R',
+        duration: 20, // The effect lasts for 20 seconds
+        apply: (player, engine) => {
+            player.maxShield = 75;
+            if (!player.hasOwnProperty('shield') || player.shield < player.maxShield) {
+                player.shield = player.maxShield;
+            }
+            player.shieldRegenRate = 15; // points per second
+            player.shieldRegenDelay = 3; // seconds after last hit
+            player.lastShieldDamageTime = 0;
+        },
+        remove: (player, engine) => {
+            delete player.shieldRegenRate;
+        }
     }
 };

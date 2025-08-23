@@ -2,7 +2,7 @@ const rulesPresets = {
     'level-progression': `function update(engine, dt) {
   // This rule manages game state through waves and boss fights.
 
-  if (engine.gameState === 'WAVE') {
+  if (engine.waveState === 'WAVE') {
     // --- WAVE LOGIC ---
     if (engine.waveEnemiesSpawned === 0) {
       // Start of a new wave, set the total number of enemies
@@ -25,27 +25,24 @@ const rulesPresets = {
       engine.waveEnemiesTotal = 0;
 
       if (engine.wave > engine.wavesPerLevel) {
-        engine.gameState = 'BOSS';
+        engine.waveState = 'BOSS';
         // Give player a moment before boss spawns
         engine.intermissionTime = engine.gameTime + 2; 
       } else {
-        engine.gameState = 'INTERMISSION';
+        engine.waveState = 'INTERMISSION';
         engine.intermissionTime = engine.gameTime + 3; // 3 second break
         engine.playWaveClearSound();
       }
     }
 
-  } else if (engine.gameState === 'BOSS') {
+  } else if (engine.waveState === 'BOSS') {
     // --- BOSS LOGIC ---
     const isBossOnScreen = engine.enemies.some(e => e.isBoss);
 
     // Check for boss defeat
     if (engine.wasBossPresent && !isBossOnScreen) {
       // Boss was here, but now it's gone. It must have been defeated.
-      engine.level++; // Level up
-      engine.wave = 1;
-      engine.gameState = 'INTERMISSION';
-      engine.intermissionTime = engine.gameTime + 5; // 5 second break after boss
+      engine.state = 'UPGRADE'; // Transition to the new upgrade screen state
       engine.playLevelCompleteSound();
     } else if (!isBossOnScreen && engine.gameTime > engine.intermissionTime) {
       // No boss is present, and the intermission is over. Spawn one.
@@ -57,10 +54,10 @@ const rulesPresets = {
     // At the end of the frame, update the flag for the next frame.
     engine.wasBossPresent = isBossOnScreen;
 
-  } else if (engine.gameState === 'INTERMISSION') {
+  } else if (engine.waveState === 'INTERMISSION') {
     // --- INTERMISSION LOGIC ---
     if (engine.gameTime > engine.intermissionTime) {
-      engine.gameState = 'WAVE';
+      engine.waveState = 'WAVE';
       document.getElementById('waveCount').style.color = '#00ff88'; // Reset color
     }
   }
@@ -99,13 +96,13 @@ const rulesPresets = {
     const dx = targetX - spawnPos.x;
     const dy = targetY - spawnPos.y;
     const dist = Math.sqrt(dx*dx + dy*dy) || 1; // Not random
-    const speed = 80 + Math.random() * 100;
+    const speed = 80 + engine.random() * 100;
 
     engine.spawnEnemy({
       ...spawnPos,
       vx: (dx/dist) * speed, vy: (dy/dist) * speed,
-      ai_type: 'linear', // This custom property prevents chasing.
-      color: '#999999', size: 4 + Math.random() * 8, health: 40,
+      ai_type: 'linear',
+      color: '#999999', size: 4 + engine.random() * 8, health: 40,
       sprite: [
         [0, 1, 1, 0],
         [1, 2, 2, 1],
@@ -118,16 +115,16 @@ const rulesPresets = {
 }`,
     powerUpFrenzy: `function update(engine, dt) {
   // Standard enemy spawning
-  if (Math.random() < 0.02) {
+  if (engine.random() < 0.02) {
     engine.spawnEnemy();
   }
 
   // High chance to spawn a random power-up anywhere on the map
-  if (Math.random() < 0.01) {
-    const x = Math.random() * engine.canvas.width;
-    const y = Math.random() * engine.canvas.height;
+  if (engine.random() < 0.01) {
+    const x = engine.random() * engine.canvas.width;
+    const y = engine.random() * engine.canvas.height;
     const types = Object.keys(powerUpTypes);
-    const randomType = types[Math.floor(Math.random() * types.length)];
+    const randomType = types[Math.floor(engine.random() * types.length)];
     engine.spawnPowerUp(x, y, randomType);
   }
 }`,
@@ -135,12 +132,12 @@ const rulesPresets = {
   // This rule spawns a mix of chasers and the new shooter enemies.
 
   // Spawn chasers
-  if (Math.random() < 0.01) {
+  if (engine.random() < 0.01) {
     engine.spawnEnemy({ ai_type: 'chase' });
   }
 
   // Spawn shooters less frequently
-  if (Math.random() < 0.005) {
+  if (engine.random() < 0.005) {
     engine.spawnEnemy({
       ai_type: 'shooter',
       health: 20,

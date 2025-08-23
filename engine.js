@@ -30,6 +30,11 @@ class SovereignEngine {
         this.lastDifficulty = 0;
         
         this.weaponShoot = this.defaultShoot;
+        // --- COMBO STATE ---
+        this.comboCount = 0;
+        this.comboTimer = 0;
+        this.comboMaxTime = 2.5; // seconds
+
         // --- PRNG ---
         this.seed = Date.now(); // Default seed to current time
         this.currentSeed = this.seed; // Internal state for PRNG
@@ -517,7 +522,7 @@ class SovereignEngine {
                         vx: (dx/dist) * 250, vy: (dy/dist) * 250,
                         size: 4, color: '#ff8800', life: 3, damage: 10
                     });
-                    enemy.attackTimer = 2.5 + Math.random(); // Reset timer
+                    enemy.attackTimer = 2.5 + this.random(); // Reset timer
                     this.playShooterSound(); // This sound is not random, so no change
                 }
             } else if (enemy.ai_type === 'chase') {
@@ -645,6 +650,12 @@ class SovereignEngine {
                                     speed: {min: 20, max: 20 + explosionSize * 15},
                                     life: {min: 0.3, max: 0.3 + explosionSize * 0.05}
                                 });
+                            }
+                            // Handle combo logic on enemy defeat
+                            this.comboTimer = this.comboMaxTime;
+                            this.comboCount++;
+                            if (this.comboCount > 1) {
+                                this.score += (this.comboCount - 1) * 5; // Add combo bonus score
                             }
                             if (this.random() < 0.1) { this.playExplosionSound(); this.spawnRandomPowerUp(enemy.x, enemy.y); }
                         }

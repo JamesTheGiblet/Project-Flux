@@ -29,6 +29,108 @@
 	#pauseOverlay {
 		position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: #00ff88; font-size: 72px; text-shadow: 0 0 20px #00ff88; display: none; align-items: center; justify-content: center; z-index: 999;
 		font-weight: bold;
+		flex-direction: column;
+	}
+	#mainMenu {
+		position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+		background: linear-gradient(180deg, rgba(10, 10, 20, 0.95) 0%, rgba(22, 33, 62, 0.98) 100%);
+		display: flex; align-items: center; justify-content: center;
+		z-index: 1001;
+		-webkit-backdrop-filter: blur(5px);
+		backdrop-filter: blur(5px);
+	}
+	.menu-container { text-align: center; }
+	.menu-title {
+		font-size: 64px;
+		color: #00ff88;
+		text-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88;
+		margin-bottom: 40px;
+	}
+	.menu-button {
+		background: #ff6b00;
+		color: #000;
+		border: none;
+		padding: 15px 40px;
+		font-size: 24px;
+		font-family: 'Courier New', monospace;
+		font-weight: bold;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+	.menu-button:hover {
+		background: #ffaa00;
+		box-shadow: 0 0 20px #ffaa00;
+	}
+	#upgradeScreen {
+		position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+		background: rgba(10, 10, 20, 0.95);
+		display: none; /* Initially hidden */
+		align-items: center; justify-content: center;
+		z-index: 1000;
+		-webkit-backdrop-filter: blur(5px);
+		backdrop-filter: blur(5px);
+		color: #fff;
+	}
+	.upgrade-container {
+		text-align: center;
+		background: rgba(0,0,0,0.5);
+		padding: 40px;
+		border: 2px solid #00ff88;
+		box-shadow: 0 0 20px #00ff88;
+	}
+	.upgrade-container h1 {
+		color: #00ff88;
+		font-size: 48px;
+		text-shadow: 0 0 10px #00ff88;
+		margin-bottom: 10px;
+	}
+	.upgrade-options {
+		display: flex;
+		gap: 15px; /* Reduced gap to fit more options */
+		margin: 30px 0;
+	}
+	.upgrade-btn {
+		background: #1a1a2e;
+		border: 2px solid #00ffff;
+		color: #00ffff;
+		padding: 15px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		width: 140px;
+	}
+	.upgrade-btn:hover:not(:disabled) {
+		background: #00ffff;
+		color: #000;
+		box-shadow: 0 0 15px #00ffff;
+	}
+	.upgrade-btn:disabled {
+		border-color: #555;
+		color: #555;
+		cursor: not-allowed;
+	}
+	.upgrade-cost {
+		font-size: 12px;
+		color: #ffdd00;
+	}
+	.upgrade-score-label { font-size: 20px; color: #ffdd00; }
+	#continueButton { background: #ff6b00; color: #000; border: none; padding: 10px 30px; font-size: 18px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-top: 20px; }
+	#comboDisplay {
+		position: absolute;
+		top: 100px;
+		left: 50%;
+		transform: translateX(-50%) scale(1.2);
+		color: #ffdd00;
+		font-size: 48px;
+		font-weight: bold;
+		text-shadow: 0 0 10px #ff6b00, 0 0 20px #ff6b00;
+		pointer-events: none;
+		z-index: 1000;
+		opacity: 0;
+		transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+	}
+	#comboDisplay.visible {
+		opacity: 1;
+		transform: translateX(-50%) scale(1);
 	}
 	.top-right-ui {
 		position: absolute;
@@ -268,12 +370,52 @@
 		padding: 0;
 		background: none;
 	}
+	.menu-highscore {
+		margin-top: 30px;
+		color: #aaa;
+	}
 	</style>
 </head>
 <body>
 	<div class="container">
 		<div class="game-area">
 			<canvas id="gameCanvas"></canvas>
+			<div id="mainMenu">
+				<div class="menu-container">
+					<h1 class="menu-title">SOVEREIGN ENGINE</h1>
+					<button id="startButton" class="menu-button">START GAME</button>
+					<p class="menu-highscore">High Score: <span id="menuHighScore">0</span></p>
+				</div>
+			</div>
+			<div id="upgradeScreen">
+				<div class="upgrade-container">
+					<h1>LEVEL COMPLETE</h1>
+					<p>Spend your score on upgrades!</p>
+					<p class="upgrade-score-label">Score: <span id="upgradeScore">0</span></p>
+					<div class="upgrade-options">
+						<button class="upgrade-btn" data-upgrade="maxHealth" data-cost="500">
+							+20 Max Health<br><span class="upgrade-cost">(Cost: 500)</span>
+						</button>
+						<button class="upgrade-btn" data-upgrade="fireRate" data-cost="750">
+							+1 Fire Rate<br><span class="upgrade-cost">(Cost: 750)</span>
+						</button>
+						<button class="upgrade-btn" data-upgrade="speed" data-cost="400">
+							+10% Base Speed<br><span class="upgrade-cost">(Cost: 400)</span>
+						</button>
+						<button class="upgrade-btn" data-upgrade="damage" data-cost="1000">
+							+10% Damage<br><span class="upgrade-cost">(Cost: 1000)</span>
+						</button>
+						<button class="upgrade-btn" data-upgrade="restoreHealth" data-cost="250">
+							Restore 50 Health<br><span class="upgrade-cost">(Cost: 250)</span>
+						</button>
+						<button class="upgrade-btn" data-upgrade="extraLife" data-cost="1500">
+							+1 Extra Life<br><span class="upgrade-cost">(Cost: 1500)</span>
+						</button>
+					</div>
+					<button id="continueButton">Continue to Next Level</button>
+				</div>
+			</div>
+			<div id="comboDisplay"></div>
 			<div id="pauseOverlay">PAUSED</div>
 			<div class="stats" id="gameStats">
 				FPS: <span id="fps">60</span><br>
@@ -456,14 +598,6 @@ player.color = '#ffff00';</code></pre>
 			oscillator.stop(audioCtx.currentTime + 0.8);
 		}
 
-        function selectPreset(modType, presetName) {
-            const textarea = document.getElementById(`${modType}Code`);
-            const presets = game.allPresets[modType];
-            if (presets && presets[presetName]) {
-                textarea.value = presets[presetName];
-            }
-        }
-
         function applyMod(modType) {
             const code = document.getElementById(`${modType}Code`).value;
             try {
@@ -549,6 +683,14 @@ player.color = '#ffff00';</code></pre>
             }
         }
 
+        function selectPreset(modType, presetName) {
+            const element = document.getElementById(`${modType}Code`);
+            const presets = game.allPresets[modType];
+            if (presets && presets[presetName]) { 
+                element.value = presets[presetName]; 
+            }
+        }
+
         function initializeModSystem() {
             game.allPresets = { weapon: {}, rule: {}, player: {}, life: {}, bossAI: {}, seed: {} };
             const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, life: lifePresets, bossAI: bossAIPresets, seed: { default: '12345' } };
@@ -574,17 +716,12 @@ player.color = '#ffff00';</code></pre>
             // Handle seed preset loading separately as it uses an input, not a select
             const seedCustomMods = JSON.parse(localStorage.getItem(`sovereign_seed_mods`)) || {};
             game.allPresets.seed = { ...defaultPresets.seed, ...seedCustomMods };
-            
-            function selectPreset(modType, presetName) {
-                const element = document.getElementById(`${modType}Code`);
-                const presets = game.allPresets[modType];
-                if (presets && presets[presetName]) { element.value = presets[presetName]; }
-            }
-        } // <-- Add this closing brace to end initializeModSystem
+        }
 
         let game;
         window.onload = function() {
             game = new SovereignEngine();
+			const mainMenu = document.getElementById('mainMenu');
 			const pauseOverlay = document.getElementById('pauseOverlay');
 			const highScore = parseInt(localStorage.getItem('sovereign_highscore') || '0');
 			document.getElementById('highScore').textContent = highScore;
@@ -592,23 +729,24 @@ player.color = '#ffff00';</code></pre>
 			// --- CORE GAME STATE & SYSTEMS PATCHING ---
 			game.player.lives = 3;
 			game.player.maxLives = 5; // Set a cap
-			game.gameOver = false;
+			game.state = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, UPGRADE
 			game.lifeRuleUpdate = function(engine, dt) {}; // Default empty function
-			game.paused = false;
 			// --- LEVEL & BOSS STATE ---
 			game.level = 1;
 			game.wave = 1;
 			game.wavesPerLevel = 3;
-			game.gameState = 'WAVE'; // WAVE, BOSS, INTERMISSION
+			game.waveState = 'WAVE'; // WAVE, BOSS, INTERMISSION
 			game.wasBossPresent = false;
 			game.waveEnemiesSpawned = 0;
 			game.waveEnemiesTotal = 0;
+			// --- COMBO STATE ---
+			game.comboCount = 0;
+			game.comboTimer = 0;
 
-			// Centralized game reset logic
-			game.resetGame = function() {
+			// Centralized game start/reset logic
+			game.startGame = function() {
 				this.player.lives = 3;
 				this.score = 0;
-				this.gameOver = false;
 				this.player.health = this.player.maxHealth || 100;
 				this.player.x = this.canvas.width / 2;
 				this.player.y = this.canvas.height / 2;
@@ -616,10 +754,12 @@ player.color = '#ffff00';</code></pre>
 				this.projectiles = [];
 				this.level = 1;
 				this.wave = 1;
-				this.gameState = 'WAVE';
+				this.waveState = 'WAVE';
 				this.waveEnemiesSpawned = 0;
 				this.wasBossPresent = false;
 				this.waveEnemiesTotal = 0;
+				this.comboCount = 0;
+				this.comboTimer = 0;
 				// Re-apply default seed
 				selectPreset('seed', 'default');
 				applyMod('seed');
@@ -628,17 +768,36 @@ player.color = '#ffff00';</code></pre>
 				pauseOverlay.style.display = 'none';
 				applyMod('rule'); // Re-apply rules to restart spawners
 				applyMod('player'); // Re-apply player stats
+				this.state = 'PLAYING';
 				console.log("Game Reset!");
 			};
 
 			// Wrap the engine's core update loop to add our own logic for
 			// lives, death, game over, pausing, and custom life rules.
 			const originalUpdate = game.update;
-			if (typeof originalUpdate !== 'function') {
-				console.error("SovereignEngine does not have a recognized `update` method to patch for pausing.");
-			} else {
+			if (typeof originalUpdate === 'function') {
 				game.update = function(dt) {
-					if (this.gameOver) return; // Stop all updates if game is over
+					// Handle state transitions that pause the game
+					if (this.state === 'UPGRADE') {
+						const upgradeScreen = document.getElementById('upgradeScreen');
+						if (upgradeScreen.style.display !== 'flex') {
+							document.getElementById('upgradeScore').textContent = this.score;
+							// Disable buttons if player can't afford them
+							document.querySelectorAll('.upgrade-btn').forEach(b => {
+								let disabled = this.score < parseInt(b.dataset.cost);
+								if (b.dataset.upgrade === 'extraLife' && this.player.lives >= this.player.maxLives) {
+									disabled = true;
+									b.title = "Max lives reached";
+								}
+								b.disabled = disabled;
+							});
+							upgradeScreen.style.display = 'flex';
+						}
+						return; // Pause game logic
+					}
+
+					// Only run game logic when in the 'PLAYING' state
+					if (this.state !== 'PLAYING') return;
 
 					// Check for player death before the main update
 					if (this.player.health <= 0) {
@@ -652,7 +811,7 @@ player.color = '#ffff00';</code></pre>
 							this.player.vx = 0; this.player.vy = 0; // Stop momentum
 						} else {
 							// Game Over
-							this.gameOver = true;
+							this.state = 'GAMEOVER';
 							playDeathSound();
 							this.shutdown(); // Properly close the audio context
 
@@ -667,12 +826,20 @@ player.color = '#ffff00';</code></pre>
 							pauseOverlay.innerHTML = `GAME OVER<br>
 								<small style="font-size: 24px;">Final Score: ${this.score}</small><small style="font-size: 18px; color: #aaa; margin-top: 10px;">High Score: ${newHighScore}</small><br><small style="font-size: 20px; margin-top: 20px;">Press 'R' to Restart</small>`;
 							pauseOverlay.style.display = 'flex';
-							pauseOverlay.style.flexDirection = 'column';
 							return; // Stop this frame
 						}
 					}
 
-					if (this.paused) return; // Handle pause state
+					// Handle combo timer and UI, which is part of the patched game logic
+					if (this.comboTimer > 0) {
+						this.comboTimer -= dt;
+						if (this.comboTimer <= 0) {
+							this.comboCount = 0;
+						}
+					}
+					const comboDisplay = document.getElementById('comboDisplay');
+					comboDisplay.textContent = `x${this.comboCount} COMBO!`;
+					comboDisplay.classList.toggle('visible', this.comboCount > 1);
 
 					// Run the original engine update
 					originalUpdate.call(this, dt);
@@ -684,24 +851,93 @@ player.color = '#ffff00';</code></pre>
 					document.getElementById('livesCount').textContent = this.player.lives;
 					document.getElementById('levelCount').textContent = this.level;
 					const waveCountUI = document.getElementById('waveCount');
-					if (this.gameState === 'WAVE') {
+					if (this.waveState === 'WAVE') {
 						const enemiesRemaining = this.waveEnemiesTotal - this.waveEnemiesSpawned + this.enemies.length;
 						waveCountUI.textContent = `Wave ${this.wave} (${enemiesRemaining} left)`;
-					} else if (this.gameState === 'BOSS') {
+					} else if (this.waveState === 'BOSS') {
 						waveCountUI.textContent = `** BOSS **`;
 						waveCountUI.style.color = '#ff3333';
 					}
 				};
 			}
 
+			// --- UI & STATE LISTENERS ---
+			document.getElementById('startButton').addEventListener('click', () => {
+				mainMenu.style.display = 'none';
+				game.startGame();
+			});
+
+			// --- UPGRADE SCREEN LISTENERS ---
+			document.querySelectorAll('.upgrade-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const cost = parseInt(btn.dataset.cost);
+					if (game.score >= cost) {
+						game.score -= cost;
+						const upgradeType = btn.dataset.upgrade;
+						switch(upgradeType) {
+							case 'maxHealth':
+								game.player.maxHealth = (game.player.maxHealth || 100) + 20;
+								game.player.health += 20; // Also give the health
+								break;
+							case 'fireRate':
+								game.player.fireRate = (game.player.fireRate || 5) + 1;
+								break;
+							case 'speed':
+								game.player.baseSpeed *= 1.10;
+								game.player.speed = game.player.baseSpeed;
+								break;
+							case 'damage':
+								game.player.damageMultiplier = (game.player.damageMultiplier || 1) * 1.10;
+								break;
+							case 'restoreHealth':
+								game.player.health += 50;
+								if (game.player.health > game.player.maxHealth) {
+									game.player.health = game.player.maxHealth;
+								}
+								break;
+							case 'extraLife':
+								if (game.player.lives < game.player.maxLives) {
+									game.player.lives++;
+								}
+								break;
+						}
+						// Update UI and re-check button disabled states
+						document.getElementById('upgradeScore').textContent = game.score;
+						document.querySelectorAll('.upgrade-btn').forEach(b => {
+							let disabled = game.score < parseInt(b.dataset.cost);
+							if (b.dataset.upgrade === 'extraLife' && game.player.lives >= game.player.maxLives) {
+								disabled = true;
+								b.title = "Max lives reached";
+							}
+							b.disabled = disabled;
+						});
+					}
+				});
+			});
+
+			document.getElementById('continueButton').addEventListener('click', () => {
+				document.getElementById('upgradeScreen').style.display = 'none';
+				game.level++;
+				game.wave = 1;
+				game.waveState = 'INTERMISSION';
+				game.intermissionTime = game.gameTime + 3; // 3 second break
+				game.state = 'PLAYING';
+			});
+
 			window.addEventListener('keydown', (e) => {
 				const key = e.key.toLowerCase();
-				if (key === 'p' && game.update && !game.gameOver) {
-					game.paused = !game.paused;
-					pauseOverlay.style.display = game.paused ? 'flex' : 'none';
+				if (key === 'p' && game.update) {
+					if (game.state === 'PLAYING') {
+						game.state = 'PAUSED';
+						pauseOverlay.innerHTML = 'PAUSED';
+						pauseOverlay.style.display = 'flex';
+					} else if (game.state === 'PAUSED') {
+						game.state = 'PLAYING';
+						pauseOverlay.style.display = 'none';
+					}
 				}
-				if (key === 'r' && game.gameOver) {
-					game.resetGame();
+				if (key === 'r' && game.state === 'GAMEOVER') {
+					game.startGame();
 				}
 			});
 
@@ -716,11 +952,6 @@ player.color = '#ffff00';</code></pre>
 					localStorage.setItem('sovereign_panel_collapsed', isCollapsed);
 				});
 
-				// Restore state on load
-				if (localStorage.getItem('sovereign_panel_collapsed') === 'true') {
-					modPanel.classList.add('collapsed');
-					modPanelToggle.innerHTML = '‹';
-				}
 			}
             initializeModSystem();
 
