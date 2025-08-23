@@ -2,7 +2,7 @@ const CACHE_NAME = 'sovereign-engine-v2';
 // Add any new files to this list to ensure they are cached for offline use.
 const urlsToCache = [
   '.', // This caches the root, which should be your main html file.
-  'sovereign-engine.html',
+  'index.html', // Renamed from sovereign-engine.html
   'engine.js',
   'mods/weapons/weapons.js',
   'mods/rules/rules.js',
