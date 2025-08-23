@@ -30,11 +30,11 @@ To demonstrate the power of the Sovereign Engine, it ships with working example 
 
     Default Player → Custom Build: Modify the player's core stats like speed, size, and color on the fly. Create a fast, fragile glass cannon or a slow, durable tank by editing the player mod.
 
-    Default Spawner → Horde Mode: See how entire game modes can be re-defined. Switch from a standard enemy spawner to a frantic "Horde Mode" with waves of weaker enemies, all controlled by the Rules Mod.
+    Endless Mode → Level Progression: See how entire game modes can be re-defined. Switch from a simple endless spawner to a complete game loop with waves, bosses, and difficulty scaling, all controlled by the Rules Mod.
 
 🚀 Get Started (Self-Hosting)
 
-Getting the Sovereign Engine up and running is designed to be as straightforward as possible:
+Getting the Sovereign Engine up and running is as straightforward as possible:
 
     Clone this repository:
 
@@ -76,22 +76,25 @@ The engine is designed for live modification directly in the browser. The "How t
 
 The weapon mod is a function with the signature function shoot(player, target, engine). To create a new projectile, you add an object to the engine.projectiles array.
 
-// Paste this into the WEAPON MOD editor to create a 3-shot burst fire weapon.
-const dx = target.x - player.x;
-const dy = target.y - player.y;
-const angle = Math.atan2(dy, dx);
-const speed = 400;
+// Paste this into the WEAPON MOD editor to try a 3-shot burst fire weapon.
+// This demonstrates using setTimeout for more complex, time-based logic.
+function shoot(player, target, engine) {
+  const dx = target.x - player.x;
+  const dy = target.y - player.y;
+  const angle = Math.atan2(dy, dx);
+  const speed = 450;
 
-for (let i = 0; i < 3; i++) {
-  setTimeout(() => {
-    const spread = (Math.random() - 0.5) *0.1;
-    engine.projectiles.push({
-      x: player.x, y: player.y,
-      vx: Math.cos(angle + spread)*speed,
-      vy: Math.sin(angle + spread) speed,
-      size: 3, color: '#ff55ff', life: 1.5
-    });
-  }, i 80); // 80ms delay between shots
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const spread = (Math.random() - 0.5) *0.1;
+      engine.projectiles.push({
+        x: player.x, y: player.y,
+        vx: Math.cos(angle + spread)* speed,
+        vy: Math.sin(angle + spread) *speed,
+        size: 3, color: '#ff55ff', life: 1.5, damage: 18
+      });
+    }, i* 80); // 80ms delay between each shot in the burst
+  }
 }
 
 🎮 Rules Mod Example

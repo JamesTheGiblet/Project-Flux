@@ -1,8 +1,11 @@
 class SovereignEngine {
     constructor() {
+        // Initialize canvas and context
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.resizeCanvas();
+
+		// --- GAME AUDIO ---
         
         this.player = { x: 400, y: 300, vx: 0, vy: 0, health: 100, size: 8, color: '#00ff88', speed: 200, lastMoveDir: { x: 0, y: -1 } };
         this.enemies = [];
@@ -15,6 +18,10 @@ class SovereignEngine {
         this.lastShotTime = 0;
         this.keys = {};
         this.mousePos = { x: 0, y: 0 };
+        this.initializeAudio();
+
+		// --- GAME STATE ---
+
         this.gameTime = 0;
         this.score = 0;
         this.frameCount = 0;
@@ -27,6 +34,26 @@ class SovereignEngine {
         
         this.setupEvents();
         this.gameLoop();
+    }
+
+    initializeAudio() {
+        try {
+            // Ensure any existing context is closed before creating a new one.
+            if (this.audioContext && this.audioContext.state !== 'closed') {
+                this.audioContext.close();
+            }
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn("Web Audio API is not supported in this browser. Audio disabled.");
+            this.audioContext = null; // Disable audio
+        }
+    }
+
+    shutdown() {
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            this.audioContext.close();
+            console.log("AudioContext shut down.");
+        }
     }
     
     resizeCanvas() {
@@ -52,12 +79,69 @@ class SovereignEngine {
         const dx = target.x - player.x;
         const dy = target.y - player.y;
         const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+		this.playShootSound();
         engine.projectiles.push({
             x: player.x, y: player.y,
             vx: (dx/dist) * 300,
             vy: (dy/dist) * 300,
             size: 3, color: '#00ff88', life: 2, damage: 25
         });
+    }
+
+    playShootSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc.type = 'square';
+        gain.gain.setValueAtTime(0.1, time);
+        osc.frequency.setValueAtTime(800, time);
+    
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(200, time + 0.1);
+    
+        osc.start(time);
+        osc.stop(time + 0.1);
+    }
+
+    playExplosionSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.2, time);
+        osc.frequency.setValueAtTime(160, time);
+    
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+        osc.frequency.exponentialRampToValueAtTime(30, time + 0.4);
+    
+        osc.start(time);
+        osc.stop(time + 0.4);
+    }
+
+    playPowerupSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.2, time);
+        osc.frequency.setValueAtTime(440, time);
+        osc.frequency.exponentialRampToValueAtTime(880, time + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+    
+        osc.start(time);
+        osc.stop(time + 0.2);
     }
     
     getEnemySpawnPosition() {
@@ -274,6 +358,7 @@ class SovereignEngine {
                         this.spawnParticles(enemy.x, enemy.y, '#ffff00', 10);
                         // 10% chance to drop a power-up on kill
                         if (Math.random() < 0.1) {
+							this.playExplosionSound();
                             const types = Object.keys(powerUpTypes);
                             const randomType = types[Math.floor(Math.random() * types.length)];
                             this.spawnPowerUp(enemy.x, enemy.y, randomType);
@@ -310,6 +395,7 @@ class SovereignEngine {
             const dy = player.y - powerUp.y;
             if (Math.sqrt(dx*dx + dy*dy) < player.size + powerUp.size) {
                 this.applyPowerUp(powerUp);
+				this.playPowerupSound();
                 this.spawnParticles(powerUp.x, powerUp.y, powerUp.color, 8);
                 return false; // Remove powerUp
             }

@@ -52,5 +52,25 @@ const weaponPresets = {
     size: 4, color: '#00ffff', life: 0.8, damage: 100,
     isRailgun: true // Custom property for special rendering,
   });
+}`,
+    'burst-fire': `function shoot(player, target, engine) {
+  // This weapon uses setTimeout to fire multiple shots with a delay,
+  // showcasing advanced, time-based logic in a mod.
+  const dx = target.x - player.x;
+  const dy = target.y - player.y;
+  const angle = Math.atan2(dy, dx);
+  const speed = 450;
+
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const spread = (Math.random() - 0.5) * 0.1;
+      engine.projectiles.push({
+        x: player.x, y: player.y,
+        vx: Math.cos(angle + spread) * speed,
+        vy: Math.sin(angle + spread) * speed,
+        size: 3, color: '#ff55ff', life: 1.5, damage: 18
+      });
+    }, i * 80); // 80ms delay between each shot in the burst
+  }
 }`
 };

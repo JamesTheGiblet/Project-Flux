@@ -38,7 +38,11 @@ const rulesPresets = {
     // --- BOSS LOGIC ---
     const bossExists = engine.enemies.some(e => e.isBoss);
     if (!bossExists && engine.gameTime > engine.intermissionTime) {
-      engine.spawnBoss();
+      engine.spawnBoss({
+        ai_type: 'boss_pattern', // Use the new AI
+        patterns: ['spiral_shot', 'charge', 'burst_shot'],
+        patternTimer: 5, // Start with a 5 second pattern
+      });
     }
 
     // If boss is defeated, progress to next level
