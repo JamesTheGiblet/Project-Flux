@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sovereign Engine: Flux</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      font-family: 'Orbitron', sans-serif;
+    }
+    canvas {
+      display: block;
+      background: radial-gradient(circle at center, #000010 0%, #000000 100%);
+    }
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 16px;
+      text-shadow: 0 0 5px #0ff;
+      user-select: none;
+    }
+    #mod-ui {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: #0ff;
+      font-size: 12px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="hud"></div>
+<div id="mod-ui">
+  <h3>Active Mods:</h3>
+  <ul id="mod-list"></ul>
+</div>
+<canvas id="game"></canvas>
+<script>
+// ======================
+// 🚀 CORE ENGINE SYSTEMS
+// ======================
+
+const EngineCore = (() => {
+  const state = {
+    entities: [],
+    projectiles: [],
+    particles: [],
+    stars: [],
+    systems: {},
+    mods: {},
+    tick: 0,
+    score: 0,
+    wave: 1,
+    keys: {},
+    running: true
+  };
+
+  return {
+    getState: () => state,
+    registerSystem: (name, system) => {
+      state.systems[name] = system;
+      console.log(`System registered: ${name}`);
+    },
+    registerMod: (name, mod) => {
+      state.mods[name] = mod;
+      document.getElementById('mod-list').innerHTML += `<li>${name}</li>`;
+      console.log(`Mod loaded: ${name}`);
+    },
+    reset: () => {
+      state.entities = [];
+      state.projectiles = [];
+      state.particles = [];
+      state.tick = 0;
+      state.score = 0;
+      state.wave = 1;
+      state.running = true;
+    }
+  };
+})();
+
+// =================
+// 🎛 EVENT BUS SYSTEM
+// =================
+class EventBus {
+  static events = {
+    ENTITY_CREATED: 'entity_created',
+    ENTITY_DESTROYED: 'entity_destroyed',
+    PROJECTILE_FIRED: 'projectile_fired',
+    DAMAGE_DEALT: 'damage_dealt',
+    WAVE_STARTED: 'wave_started',
+    GAME_OVER: 'game_over',
+    MOD_LOADED: 'mod_loaded'
+  };
+
+  static subscribe(event, callback) {
+    document.addEventListener(event, (e) => callback(e.detail));
+  }
+
+  static publish(event, detail = {}) {
+    document.dispatchEvent(new CustomEvent(event, { detail }));
+  }
+}
+
+// =================
+// 🖼 RENDER SYSTEM
+// =================
+const RenderSystem = (() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  function drawStars() {
+    const { stars } = EngineCore.getState();
+    ctx.fillStyle = 'white';
+    stars.forEach(s => {
+      s.y += s.speed;
+      if (s.y > canvas.height) s.y = 0;
+      ctx.fillRect(s.x, s.y, s.size, s.size);
+    });
+  }
+
+  function drawEntities() {
+    const { entities } = EngineCore.getState();
+    entities.forEach(e => {
+      if (e.render) {
+        e.render(ctx);
+      } else {
+        // Default rendering
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius || 15, 0, Math.PI * 2);
+        ctx.fillStyle = e.color || '#ff0000';
+        ctx.shadowColor = e.color || '#ff0000';
+        ctx.shadowBlur = 15;
+        ctx.fill();
+      }
+    });
+  }
+
+  function drawProjectiles() {
+    const { projectiles } = EngineCore.getState();
+    projectiles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius || 3, 0, Math.PI * 2);
+      ctx.fillStyle = p.color || '#00ffff';
+      ctx.shadowColor = p.color || '#00ffff';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+    });
+  }
+
+  function drawParticles() {
+    const { particles } = EngineCore.getState();
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius || 2, 0, Math.PI * 2);
+      ctx.fillStyle = p.color || '#ffff00';
+      ctx.shadowColor = p.color || '#ffff00';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+    });
+  }
+
+  function drawHUD() {
+    const { entities, score, wave, running } = EngineCore.getState();
+    const hud = document.getElementById('hud');
+    
+    if (!running) return;
+    
+    const player = entities.find(e => e.type === 'player');
+    if (player) {
+      hud.innerHTML = `Health: ${player.health} | Score: ${score} | Wave: ${wave}`;
+    }
+  }
+
+  return {
+    init: () => {
+      // Initialize starfield
+      const stars = [];
+      for (let i = 0; i < 200; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2,
+          speed: 0.2 + Math.random() * 0.5
+        });
+      }
+      EngineCore.getState().stars = stars;
+    },
+    update: () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawStars();
+      drawEntities();
+      drawProjectiles();
+      drawParticles();
+      drawHUD();
+    }
+  };
+})();
+
+// =================
+// 🏃 PHYSICS SYSTEM
+// =================
+const PhysicsSystem = (() => {
+  function updatePosition(entity) {
+    if (entity.physics && entity.physics.update) {
+      entity.physics.update(entity);
+    } else {
+      // Default physics
+      entity.x += entity.vx || 0;
+      entity.y += entity.vy || 0;
+      
+      // Basic friction
+      if (entity.vx) entity.vx *= 0.95;
+      if (entity.vy) entity.vy *= 0.95;
+    }
+  }
+
+  function checkBounds(entity) {
+    const canvas = document.getElementById('game');
+    if (entity.boundToCanvas !== false) {
+      entity.x = Math.max(entity.radius || 15, Math.min(canvas.width - (entity.radius || 15), entity.x));
+      entity.y = Math.max(entity.radius || 15, Math.min(canvas.height - (entity.radius || 15), entity.y));
+    }
+  }
+
+  function checkCollisions() {
+    const state = EngineCore.getState();
+    const { projectiles, entities } = state;
+
+    projectiles.forEach((p, pi) => {
+      entities.forEach(e => {
+        if (e.faction === p.faction) return;
+        
+        const dx = p.x - e.x;
+        const dy = p.y - e.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = (p.radius || 3) + (e.radius || 15);
+
+        if (distance < minDistance) {
+          // Handle collision
+          if (p.onHit) p.onHit(e);
+          if (e.onDamage) e.onDamage(p.damage || 10);
+          
+          // Create impact effect
+          state.particles.push({
+            x: p.x,
+            y: p.y,
+            radius: 5,
+            color: '#ff5500',
+            life: 15
+          });
+
+          // Remove projectile
+          state.projectiles.splice(pi, 1);
+        }
+      });
+    });
+  }
+
+  return {
+    update: () => {
+      const { entities } = EngineCore.getState();
+      entities.forEach(e => {
+        updatePosition(e);
+        checkBounds(e);
+      });
+      checkCollisions();
+    }
+  };
+})();
+
+// =================
+// ⚔️ COMBAT SYSTEM
+// =================
+const CombatSystem = (() => {
+  return {
+    applyDamage: (target, amount) => {
+      if (target.invulnerable) return;
+      
+      target.health -= amount;
+      
+      // Create damage indicator
+      EngineCore.getState().particles.push({
+        x: target.x,
+        y: target.y - 20,
+        text: `-${amount}`,
+        color: '#ff0000',
+        life: 30
+      });
+
+      if (target.health <= 0) {
+        target.onDeath?.();
+        EngineCore.getState().entities = EngineCore.getState().entities.filter(e => e !== target);
+        
+        if (target.type === 'enemy') {
+          EngineCore.getState().score += 10;
+        } else if (target.type === 'player') {
+          EventBus.publish(EventBus.events.GAME_OVER);
+        }
+      }
+    }
+  };
+})();
+
+// =================
+// 🧩 ENTITY FACTORY
+// =================
+const EntityFactory = (() => {
+  return {
+    createPlayer: (config = {}) => {
+      const canvas = document.getElementById('game');
+      const player = {
+        type: 'player',
+        faction: 'player',
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 20,
+        health: 300,
+        maxHealth: 300,
+        speed: 0.5,
+        color: '#00ffff',
+        cooldown: 0,
+        invulnerable: false,
+        weapons: ['triple_shot'],
+        ...config
+      };
+
+      EngineCore.getState().entities.push(player);
+      EventBus.publish(EventBus.events.ENTITY_CREATED, player);
+      return player;
+    },
+    
+    createEnemy: (type, x, y) => {
+      const enemyTypes = {
+        basic: { health: 50, speed: 0.3, color: '#ff3300', score: 10 },
+        fast: { health: 30, speed: 0.7, color: '#ff8800', score: 15 },
+        tank: { health: 120, speed: 0.2, color: '#ff0000', score: 25 }
+      };
+
+      const enemy = {
+        type: 'enemy',
+        faction: 'enemy',
+        x, y,
+        radius: 15,
+        ...enemyTypes[type] || enemyTypes.basic,
+        behavior: 'chase'
+      };
+
+      EngineCore.getState().entities.push(enemy);
+      EventBus.publish(EventBus.events.ENTITY_CREATED, enemy);
+      return enemy;
+    },
+    
+    createProjectile: (config) => {
+      const projectile = {
+        radius: 3,
+        color: '#00ffff',
+        damage: 10,
+        life: 60,
+        faction: 'player',
+        ...config
+      };
+
+      EngineCore.getState().projectiles.push(projectile);
+      EventBus.publish(EventBus.events.PROJECTILE_FIRED, projectile);
+      return projectile;
+    }
+  };
+})();
+
+// =================
+// 🎮 WEAPON SYSTEM
+// =================
+const WeaponSystem = (() => {
+  const weapons = {
+    single_shot: {
+      cooldown: 10,
+      shoot(origin, target) {
+        const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+        return [EntityFactory.createProjectile({
+          x: origin.x,
+          y: origin.y,
+          vx: Math.cos(angle) * 8,
+          vy: Math.sin(angle) * 8,
+          damage: 15
+        })];
+      }
+    },
+    triple_shot: {
+      cooldown: 15,
+      shoot(origin, target) {
+        const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+        return [-0.2, 0, 0.2].map(offset => 
+          EntityFactory.createProjectile({
+            x: origin.x,
+            y: origin.y,
+            vx: Math.cos(angle + offset) * 7,
+            vy: Math.sin(angle + offset) * 7,
+            damage: 8
+          })
+        );
+      }
+    }
+  };
+
+  return {
+    registerWeapon: (name, config) => {
+      weapons[name] = config;
+      console.log(`Weapon registered: ${name}`);
+    },
+    shoot: (weaponName, origin, target) => {
+      const weapon = weapons[weaponName];
+      if (!weapon) return [];
+      
+      return weapon.shoot(origin, target);
+    }
+  };
+})();
+
+// =================
+// 🧠 AI SYSTEM
+// =================
+const AISystem = (() => {
+  const behaviors = {
+    chase: (entity) => {
+      const state = EngineCore.getState();
+      const player = state.entities.find(e => e.type === 'player');
+      if (!player) return;
+
+      const dx = player.x - entity.x;
+      const dy = player.y - entity.y;
+      const angle = Math.atan2(dy, dx);
+      
+      entity.vx = Math.cos(angle) * entity.speed;
+      entity.vy = Math.sin(angle) * entity.speed;
+    },
+    wander: (entity) => {
+      if (Math.random() < 0.02) {
+        entity.vx = (Math.random() - 0.5) * entity.speed * 2;
+        entity.vy = (Math.random() - 0.5) * entity.speed * 2;
+      }
+    }
+  };
+
+  return {
+    registerBehavior: (name, func) => {
+      behaviors[name] = func;
+      console.log(`AI Behavior registered: ${name}`);
+    },
+    update: () => {
+      const { entities } = EngineCore.getState();
+      entities.forEach(e => {
+        if (e.behavior && behaviors[e.behavior]) {
+          behaviors[e.behavior](e);
+        }
+      });
+    }
+  };
+})();
+
+// =================
+// 🌊 WAVE SYSTEM
+// =================
+const WaveSystem = (() => {
+  function spawnWave(waveNumber) {
+    const count = 5 + waveNumber * 2;
+    const canvas = document.getElementById('game');
+    
+    for (let i = 0; i < count; i++) {
+      const type = Math.random() < 0.2 ? 'fast' : (Math.random() < 0.1 ? 'tank' : 'basic');
+      const x = Math.random() * (canvas.width - 100) + 50;
+      const y = Math.random() * (canvas.height - 100) + 50;
+      EntityFactory.createEnemy(type, x, y);
+    }
+    
+    EventBus.publish(EventBus.events.WAVE_STARTED, { waveNumber });
+  }
+
+  return {
+    nextWave: () => {
+      const state = EngineCore.getState();
+      state.wave++;
+      spawnWave(state.wave);
+    },
+    checkWaveCompletion: () => {
+      const state = EngineCore.getState();
+      if (state.entities.filter(e => e.type === 'enemy').length === 0) {
+        this.nextWave();
+      }
+    }
+  };
+})();
+
+// =================
+// 🛠️ MOD LOADER
+// =================
+const ModLoader = (() => {
+  return {
+    load: (mod) => {
+      try {
+        // Register components from mod
+        if (mod.weapons) {
+          Object.entries(mod.weapons).forEach(([name, config]) => {
+            WeaponSystem.registerWeapon(name, config);
+          });
+        }
+
+        if (mod.behaviors) {
+          Object.entries(mod.behaviors).forEach(([name, func]) => {
+            AISystem.registerBehavior(name, func);
+          });
+        }
+
+        if (mod.onLoad) {
+          mod.onLoad();
+        }
+
+        EngineCore.registerMod(mod.name || 'Anonymous Mod', mod);
+        return true;
+      } catch (e) {
+        console.error(`Failed to load mod: ${e}`);
+        return false;
+      }
+    },
+    loadFromURL: async (url) => {
+      try {
+        const response = await fetch(url);
+        const mod = await response.json();
+        return this.load(mod);
+      } catch (e) {
+        console.error(`Failed to load mod from URL: ${url}`, e);
+        return false;
+      }
+    }
+  };
+})();
+
+// =================
+// 🎮 INPUT SYSTEM
+// =================
+const InputSystem = (() => {
+  const keys = {};
+
+  function handleKeyDown(e) {
+    keys[e.key.toLowerCase()] = true;
+    
+    // Quick restart
+    if (!EngineCore.getState().running && e.key.toLowerCase() === 'r') {
+      startGame();
+    }
+  }
+
+  function handleKeyUp(e) {
+    keys[e.key.toLowerCase()] = false;
+  }
+
+  function handleMouseClick(e) {
+    const state = EngineCore.getState();
+    if (!state.running) return;
+    
+    const player = state.entities.find(e => e.type === 'player');
+    if (player && player.cooldown <= 0) {
+      player.weapons.forEach(weapon => {
+        WeaponSystem.shoot(weapon, player, { x: e.clientX, y: e.clientY });
+      });
+      player.cooldown = 15;
+    }
+  }
+
+  return {
+    init: () => {
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
+      document.getElementById('game').addEventListener('click', handleMouseClick);
+    },
+    getKey: (key) => keys[key] || false,
+    getKeys: () => ({ ...keys })
+  };
+})();
+
+// =================
+// 🕹️ GAME LOGIC
+// =================
+function startGame() {
+  EngineCore.reset();
+  EntityFactory.createPlayer();
+  WaveSystem.nextWave();
+}
+
+function updateGame() {
+  const state = EngineCore.getState();
+  if (!state.running) return;
+
+  // Update player movement
+  const player = state.entities.find(e => e.type === 'player');
+  if (player) {
+    const { keys } = state;
+    if (keys['arrowup'] || keys['w']) player.vy -= player.speed;
+    if (keys['arrowdown'] || keys['s']) player.vy += player.speed;
+    if (keys['arrowleft'] || keys['a']) player.vx -= player.speed;
+    if (keys['arrowright'] || keys['d']) player.vx += player.speed;
+
+    if (player.cooldown > 0) player.cooldown--;
+  }
+
+  // Update systems
+  PhysicsSystem.update();
+  AISystem.update();
+  WaveSystem.checkWaveCompletion();
+
+  // Clean up expired projectiles
+  state.projectiles = state.projectiles.filter(p => p.life-- > 0);
+  
+  // Clean up expired particles
+  state.particles = state.particles.filter(p => p.life-- > 0);
+
+  state.tick++;
+}
+
+// =================
+// 🏁 INITIALIZATION
+// =================
+function init() {
+  // Register systems
+  EngineCore.registerSystem('render', RenderSystem);
+  EngineCore.registerSystem('physics', PhysicsSystem);
+  EngineCore.registerSystem('combat', CombatSystem);
+  EngineCore.registerSystem('weapons', WeaponSystem);
+  EngineCore.registerSystem('ai', AISystem);
+  EngineCore.registerSystem('waves', WaveSystem);
+  EngineCore.registerSystem('input', InputSystem);
+
+  // Initialize systems
+  RenderSystem.init();
+  InputSystem.init();
+
+  // Load default mods
+  ModLoader.load({
+    name: 'Default Weapons',
+    weapons: {
+      spread_shot: {
+        cooldown: 20,
+        shoot(origin, target) {
+          const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+          return Array(5).fill(0).map((_, i) => 
+            EntityFactory.createProjectile({
+              x: origin.x,
+              y: origin.y,
+              vx: Math.cos(angle + (i-2)*0.15) * 6,
+              vy: Math.sin(angle + (i-2)*0.15) * 6,
+              damage: 6,
+              color: '#ff00ff'
+            })
+          );
+        }
+      }
+    }
+  });
+
+  // Start game loop
+  function gameLoop() {
+    updateGame();
+    RenderSystem.update();
+    requestAnimationFrame(gameLoop);
+  }
+
+  startGame();
+  gameLoop();
+}
+
+// Start the engine
+init();
+
+// =================
+// 📜 MOD EXAMPLES (can be loaded dynamically)
+// =================
+/*
+// Example mod to load via ModLoader.loadFromURL()
+{
+  "name": "Gravity Gun Mod",
+  "weapons": {
+    "gravity_gun": {
+      "cooldown": 60,
+      "shoot": function(origin, target) {
+        const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+        return [{
+          x: origin.x,
+          y: origin.y,
+          vx: Math.cos(angle) * 5,
+          vy: Math.sin(angle) * 5,
+          radius: 8,
+          color: '#5500ff',
+          life: 90,
+          damage: 5,
+          onHit: function(target) {
+            // Pull nearby enemies toward impact point
+            EngineCore.getState().entities
+              .filter(e => e.type === 'enemy')
+              .forEach(e => {
+                const dx = this.x - e.x;
+                const dy = this.y - e.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 150) {
+                  const force = 30 / dist;
+                  e.vx += dx * force * 0.1;
+                  e.vy += dy * force * 0.1;
+                }
+              });
+          }
+        }];
+      }
+    }
+  },
+  "onLoad": function() {
+    // Add gravity gun to player
+    const player = EngineCore.getState().entities.find(e => e.type === 'player');
+    if (player) {
+      player.weapons.push('gravity_gun');
+    }
+  }
+}
+*/
+</script>
+</body>
+</html>
