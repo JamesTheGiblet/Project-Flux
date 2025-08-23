@@ -54,8 +54,18 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		position: relative; /* For the timer bar */
+		overflow: hidden; /* To contain the timer bar */
 		font-size: 12px;
 		font-weight: bold;
+	}
+	.powerup-timer {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		height: 4px;
+		background: rgba(255, 255, 255, 0.8);
+		transition: width 0.1s linear;
 	}
 	.mod-panel {
 		width: 300px;
@@ -739,4 +749,3 @@ Every system is hackable!
 
 </body>
 </html>
-

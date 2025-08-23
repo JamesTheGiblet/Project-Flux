@@ -86,7 +86,7 @@ function shoot(player, target, engine) {
 
   for (let i = 0; i < 3; i++) {
     setTimeout(() => {
-      const spread = (Math.random() - 0.5) *0.1;
+      const spread = (engine.random() - 0.5) *0.1;
       engine.projectiles.push({
         x: player.x, y: player.y,
         vx: Math.cos(angle + spread)* speed,
@@ -99,17 +99,55 @@ function shoot(player, target, engine) {
 
 🎮 Rules Mod Example
 
-The rules mod is a function that runs every frame: function update(engine, dt). You can use it to control enemy spawning, difficulty, or any other global game logic.
+The rules mod is a function that runs every frame: `function update(engine, dt)`. You can use it to control enemy spawning, difficulty, or any other global game logic.
 
-// Paste this into the RULES MOD editor to spawn bosses every 15 seconds.
-if (engine.gameTime > (engine.lastBossTime || 0) + 15) {
-  engine.spawnEnemy({
-    health: 200,
-    size: 20,
-    color: '#ff1111',
-    ai_type: 'chase'
-  });
-  engine.lastBossTime = engine.gameTime;
+// This is the 'level-progression' rule, managing waves, intermissions, and boss fights.
+function update(engine, dt) {
+  if (engine.gameState === 'WAVE') {
+    // Spawn enemies for the current wave
+    if (engine.waveEnemiesSpawned < engine.waveEnemiesTotal && engine.random() < 0.05) {
+      engine.spawnEnemy({
+        health: 30 + engine.level *5,
+        size: 6 + engine.random()* engine.level,
+      });
+      engine.waveEnemiesSpawned++;
+    }
+
+    // Check if wave is cleared
+    if (engine.waveEnemiesSpawned >= engine.waveEnemiesTotal && engine.enemies.length === 0) {
+      engine.wave++;
+      engine.waveEnemiesSpawned = 0;
+      engine.waveEnemiesTotal = 0;
+
+      if (engine.wave > engine.wavesPerLevel) {
+        engine.gameState = 'BOSS';
+        engine.intermissionTime = engine.gameTime + 2; // Give player a moment
+      } else {
+        engine.gameState = 'INTERMISSION';
+        engine.intermissionTime = engine.gameTime + 3; // 3 second break
+      }
+    }
+
+  } else if (engine.gameState === 'BOSS') {
+    // Boss spawning and defeat logic
+    const bossExists = engine.enemies.some(e => e.isBoss);
+    if (!bossExists && engine.gameTime > engine.intermissionTime) {
+      engine.spawnBoss({
+        ai_type: 'boss_pattern', // Boss uses advanced patterns
+        patterns: ['spiral_shot', 'charge', 'burst_shot'],
+      });
+    }
+    if (bossExists && !engine.enemies.some(e => e.isBoss)) {
+      engine.level++;
+      engine.wave = 1;
+      engine.gameState = 'INTERMISSION';
+      engine.intermissionTime = engine.gameTime + 5; // 5 second break after boss
+    }
+  } else if (engine.gameState === 'INTERMISSION') {
+    if (engine.gameTime > engine.intermissionTime) {
+      engine.gameState = 'WAVE';
+    }
+  }
 }
 
 🌐 Distribution & Sharing
@@ -132,12 +170,15 @@ Beyond the core modding capabilities, the Sovereign Engine has evolved with seve
 
 - **Life System & Game Over:** Players now have a limited number of lives, with a clear game-over state and high score tracking.
 - **Hackable Life Rules:** A dedicated "LIFE MOD" panel allows you to define custom rules for gaining extra lives (e.g., based on score, time, or specific events).
-- **Power-Up System:** Collectible power-ups (Shield, Speed Boost, Quad Damage, Health Pack, Nuke) drop from defeated enemies, offering temporary advantages or instant effects.
+- **Power-Up System:** Collectible power-ups (Shield, Speed Boost, Quad Damage, Health Pack, Nuke, Regenerating Shield) drop from defeated enemies, offering temporary advantages or instant effects.
 - **Pixel Art & Rotation:** All entities (player, enemies, bosses) are rendered with retro pixel art sprites that dynamically rotate to face their direction of movement.
-- **Procedural Sound Effects:** Enjoy satisfying synth sounds for shooting, explosions, and power-up collection, all generated on-the-fly without external audio files.
+- **Procedural Sound Effects:** Enjoy satisfying synth sounds for shooting, explosions, and power-up collection, all generated on-the-fly without external audio files. Includes sounds for player hit, boss phase transitions, wave clear, and level complete.
 - **Pause Functionality:** Press 'P' to pause and resume the game at any time.
 - **Collapsible Mod Panel:** The modding UI can now be collapsed to maximize game screen space, with its state remembered across sessions.
 - **Advanced Boss AI:** Bosses no longer just chase; they employ distinct attack patterns including spiral shots, targeted bursts, and telegraphed charges, making each encounter a unique challenge.
+- **Seeded Randomness:** Game sessions are now deterministic based on a numerical seed, allowing for predictable and replayable runs.
+- **Enhanced Particle Effects:** More varied particle effects for player hits, enemy explosions (scaled by size), and projectile impacts (e.g., shotgun pellet splats).
+- **Power-up Timer Display:** Active power-ups now show a visual countdown bar and tooltip for their remaining duration.
 
 Want to add multiplayer? Mod the network layer. Want different graphics? Mod the renderer. Want blockchain integration? Mod the state system. The architecture doesn't care what you build—it just gives you the tools and gets out of your way. This is how all software should be built: transparent, modifiable, and yours.
 

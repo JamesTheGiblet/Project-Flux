@@ -902,12 +902,25 @@ class SovereignEngine {
     renderPowerUpUI() {
         const container = document.getElementById('activePowerUpsContainer');
         container.innerHTML = '';
-        
+
         this.activePowerUps.forEach(p => {
             const icon = document.createElement('div');
             icon.className = 'powerup-icon';
             icon.style.background = p.color;
             icon.textContent = p.symbol;
+            icon.title = `${p.type} - ${p.timeRemaining > 0 ? p.timeRemaining.toFixed(1) + 's left' : 'Active'}`;
+
+            // Only add a timer bar for power-ups with a duration
+            if (p.duration > 0) {
+                const timer = document.createElement('div');
+                timer.className = 'powerup-timer';
+                
+                const percentRemaining = (p.timeRemaining / p.duration) * 100;
+                timer.style.width = `${percentRemaining}%`;
+                
+                icon.appendChild(timer);
+            }
+
             container.appendChild(icon);
         });
     }
