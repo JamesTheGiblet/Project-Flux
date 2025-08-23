@@ -26,6 +26,10 @@
 		height: 100%;
 		background: #0a0a0a;
 	}
+	#pauseOverlay {
+		position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: #00ff88; font-size: 72px; text-shadow: 0 0 20px #00ff88; display: none; align-items: center; justify-content: center; z-index: 999;
+		font-weight: bold;
+	}
 	.top-right-ui {
 		position: absolute;
 		top: 20px;
@@ -100,11 +104,11 @@
 		padding: 8px;
 		margin-bottom: 8px;
 	}
-	.apply-btn {
+	.apply-btn, .execute-btn {
 		background: #ff6b00;
 		color: #000;
 		border: none;
-		padding: 6px 12px;
+		padding: 5px 12px;
 		border-radius: 3px;
 		cursor: pointer;
 		font-weight: bold;
@@ -121,7 +125,7 @@
 		background: #1a1a1a;
 		border: 1px solid #333;
 		color: #00ff88;
-		padding: 6px;
+		padding: 4px 6px;
 		font-family: 'Courier New', monospace;
 		font-size: 10px;
 		margin-right: 5px;
@@ -130,7 +134,7 @@
 		background: #005588;
 		color: #fff;
 		border: none;
-		padding: 6px 10px;
+		padding: 4px 8px;
 		cursor: pointer;
 	}
 	.execute-btn:hover {
@@ -150,6 +154,10 @@
 		-webkit-backdrop-filter: blur(5px);
 		backdrop-filter: blur(5px);
 		z-index: 100;
+	}
+	.stats-divider {
+		border-color: #333;
+		margin: 4px 0;
 	}
 	.manifesto {
 		background: rgba(0, 0, 0, 0.9);
@@ -226,10 +234,17 @@
 	<div class="container">
 		<div class="game-area">
 			<canvas id="gameCanvas"></canvas>
+			<div id="pauseOverlay">PAUSED</div>
 			<div class="stats" id="gameStats">
 				FPS: <span id="fps">60</span><br>
 				Objects: <span id="objectCount">0</span><br>
-				Score: <span id="score">0</span>
+				<hr class="stats-divider">
+				Score: <span id="score">0</span><br>
+				Lives: <span id="livesCount">3</span><br>
+				High Score: <span id="highScore">0</span><br>
+				<hr class="stats-divider">
+				Level: <span id="levelCount">1</span><br>
+				Progress: <span id="waveCount">Wave 1</span>
 			</div>
 			<div class="top-right-ui">
 				<div id="activePowerUpsContainer">
@@ -323,6 +338,17 @@ player.color = '#ffff00';</code></pre>
             </div>
 
             <div class="mod-section">
+                <h3>❤️ LIFE MOD</h3>
+                <select id="lifeSelector" title="Select life mod preset" onchange="selectPreset('life', this.value)"></select>
+                <textarea class="code-editor" id="lifeCode" placeholder="Write or modify life gain rules here..."></textarea>
+                <button class="apply-btn" onclick="applyMod('life')">Apply Life Rules</button>
+                <div class="save-preset-area">
+                    <input type="text" class="preset-name-input" id="lifePresetName" placeholder="Save as new preset...">
+                    <button class="save-btn" onclick="savePreset('life')">💾 Save</button>
+                </div>
+            </div>
+
+            <div class="mod-section">
                 <h3>💻 HACK THE SYSTEM</h3>
                 <textarea class="code-editor" id="hackCode" placeholder="/* DANGER ZONE */
 // Code here has direct access to the 'game' object.
@@ -334,13 +360,38 @@ player.color = '#ffff00';</code></pre>
         </div>
     </div>
 
-    <script src="engine.js"></script>
-    <script src="weapons.js"></script>
-    <script src="rules.js"></script>
-    <script src="player.js"></script>
-    <script src="power-ups.js"></script>
+    <script src="engine.js"></script> <!-- Core engine remains in root -->
+    <script src="mods/weapons/weapons.js"></script>
+    <script src="mods/rules/rules.js"></script>
+    <script src="mods/player/player.js"></script>
+    <script src="mods/health/life.js"></script>
+    <script src="mods/power-ups/power-ups.js"></script>
     <script>
         // --- MOD SYSTEM ---
+
+		let audioCtx;
+		function playDeathSound() {
+			// Create audio context on first use (as required by browsers)
+			if (!audioCtx) {
+				try {
+					audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+				} catch (e) {
+					console.error("Web Audio API is not supported in this browser.");
+					return;
+				}
+			}
+			const oscillator = audioCtx.createOscillator();
+			const gainNode = audioCtx.createGain();
+			oscillator.connect(gainNode);
+			gainNode.connect(audioCtx.destination);
+			oscillator.type = 'sawtooth';
+			gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+			oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+			oscillator.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.8);
+			gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+			oscillator.start(audioCtx.currentTime);
+			oscillator.stop(audioCtx.currentTime + 0.8);
+		}
 
         function selectPreset(modType, presetName) {
             const textarea = document.getElementById(`${modType}Code`);
@@ -353,23 +404,31 @@ player.color = '#ffff00';</code></pre>
         function applyMod(modType) {
             const code = document.getElementById(`${modType}Code`).value;
             try {
-                const functionBody = code.substring(code.indexOf('{') + 1, code.lastIndexOf('}'));
-                
+                // Using eval is the most robust way to parse a full function string provided by the user.
+                // The parentheses `()` turn the function declaration into an expression, returning the function object.
+                const modFunc = eval(`(${code})`);
+
+                if (typeof modFunc !== 'function') {
+                    throw new Error("The provided code is not a valid function definition.");
+                }
+
                 switch(modType) {
                     case 'weapon':
-                        game.weaponShoot = new Function('player', 'target', 'engine', functionBody);
+                        game.weaponShoot = modFunc;
                         break;
                     case 'rule':
-                        game.rulesUpdate = new Function('engine', 'dt', functionBody);
+                        game.rulesUpdate = modFunc;
                         break;
                     case 'player':
-                        const modFunc = new Function('player', functionBody);
                         modFunc(game.player);
+                        break;
+                    case 'life':
+                        game.lifeRuleUpdate = modFunc;
                         break;
                 }
                 console.log(`${modType.charAt(0).toUpperCase() + modType.slice(1)} mod applied!`);
             } catch (e) {
-                alert(`Error in ${modType} code: ` + e.message);
+                alert(`Error in ${modType} code: ${e.message}`);
             }
         }
 
@@ -413,8 +472,8 @@ player.color = '#ffff00';</code></pre>
         }
 
         function initializeModSystem() {
-            game.allPresets = { weapon: {}, rule: {}, player: {} };
-            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets };
+            game.allPresets = { weapon: {}, rule: {}, player: {}, life: {} };
+            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, life: lifePresets };
 
             for (const modType in game.allPresets) {
                 const customMods = JSON.parse(localStorage.getItem(`sovereign_${modType}_mods`)) || {};
@@ -436,12 +495,127 @@ player.color = '#ffff00';</code></pre>
         let game;
         window.onload = function() {
             game = new SovereignEngine();
+			const pauseOverlay = document.getElementById('pauseOverlay');
+			const highScore = parseInt(localStorage.getItem('sovereign_highscore') || '0');
+			document.getElementById('highScore').textContent = highScore;
+
+			// --- CORE GAME STATE & SYSTEMS PATCHING ---
+			game.player.lives = 3;
+			game.player.maxLives = 5; // Set a cap
+			game.gameOver = false;
+			game.lifeRuleUpdate = function(engine, dt) {}; // Default empty function
+			game.paused = false;
+			// --- LEVEL & BOSS STATE ---
+			game.level = 1;
+			game.wave = 1;
+			game.wavesPerLevel = 3;
+			game.gameState = 'WAVE'; // WAVE, BOSS, INTERMISSION
+			game.waveEnemiesSpawned = 0;
+			game.waveEnemiesTotal = 0;
+
+			// Centralized game reset logic
+			game.resetGame = function() {
+				this.player.lives = 3;
+				this.score = 0;
+				this.gameOver = false;
+				this.player.health = this.player.maxHealth || 100;
+				this.player.x = this.canvas.width / 2;
+				this.player.y = this.canvas.height / 2;
+				this.enemies = [];
+				this.projectiles = [];
+				this.level = 1;
+				this.wave = 1;
+				this.gameState = 'WAVE';
+				this.waveEnemiesSpawned = 0;
+				this.waveEnemiesTotal = 0;
+				pauseOverlay.innerHTML = 'PAUSED'; // Reset for pause functionality
+				pauseOverlay.style.display = 'none';
+				applyMod('rule'); // Re-apply rules to restart spawners
+				applyMod('player'); // Re-apply player stats
+				console.log("Game Reset!");
+			};
+
+			// Wrap the engine's core update loop to add our own logic for
+			// lives, death, game over, pausing, and custom life rules.
+			const originalUpdate = game.update;
+			if (typeof originalUpdate !== 'function') {
+				console.error("SovereignEngine does not have a recognized `update` method to patch for pausing.");
+			} else {
+				game.update = function(dt) {
+					if (this.gameOver) return; // Stop all updates if game is over
+
+					// Check for player death before the main update
+					if (this.player.health <= 0) {
+						this.player.lives--;
+						
+						if (this.player.lives > 0) {
+							// Respawn
+							this.player.health = this.player.maxHealth || 100;
+							this.player.x = this.canvas.width / 2;
+							this.player.y = this.canvas.height / 2;
+							this.player.vx = 0; this.player.vy = 0; // Stop momentum
+						} else {
+							// Game Over
+							this.gameOver = true;
+							playDeathSound();
+
+							const currentHighScore = parseInt(localStorage.getItem('sovereign_highscore') || '0');
+							let newHighScore = currentHighScore;
+							if (this.score > currentHighScore) {
+								newHighScore = this.score;
+								localStorage.setItem('sovereign_highscore', this.score);
+								document.getElementById('highScore').textContent = newHighScore;
+							}
+
+							pauseOverlay.innerHTML = `GAME OVER<br>
+								<small style="font-size: 24px;">Final Score: ${this.score}</small><small style="font-size: 18px; color: #aaa; margin-top: 10px;">High Score: ${newHighScore}</small><br><small style="font-size: 20px; margin-top: 20px;">Press 'R' to Restart</small>`;
+							pauseOverlay.style.display = 'flex';
+							pauseOverlay.style.flexDirection = 'column';
+							return; // Stop this frame
+						}
+					}
+
+					if (this.paused) return; // Handle pause state
+
+					// Run the original engine update
+					originalUpdate.call(this, dt);
+
+					// Run the hackable life rules
+					this.lifeRuleUpdate(this, dt);
+
+					// Update UI stats
+					document.getElementById('livesCount').textContent = this.player.lives;
+					document.getElementById('levelCount').textContent = this.level;
+					const waveCountUI = document.getElementById('waveCount');
+					if (this.gameState === 'WAVE') {
+						const enemiesRemaining = this.waveEnemiesTotal - this.waveEnemiesSpawned + this.enemies.length;
+						waveCountUI.textContent = `Wave ${this.wave} (${enemiesRemaining} left)`;
+					} else if (this.gameState === 'BOSS') {
+						waveCountUI.textContent = `** BOSS **`;
+						waveCountUI.style.color = '#ff3333';
+					}
+				};
+			}
+
+			window.addEventListener('keydown', (e) => {
+				const key = e.key.toLowerCase();
+				if (key === 'p' && game.update && !game.gameOver) {
+					game.paused = !game.paused;
+					pauseOverlay.style.display = game.paused ? 'flex' : 'none';
+				}
+				if (key === 'r' && game.gameOver) {
+					game.resetGame();
+				}
+			});
+
             initializeModSystem();
 
             // Select and apply default mods on startup
             selectPreset('weapon', 'default');
-            selectPreset('rule', 'default');
+            selectPreset('rule', 'level-progression');
             selectPreset('player', 'default');
+            selectPreset('life', 'points-based');
+            applyMod('life');
             applyMod('rule');
             applyMod('player');
 

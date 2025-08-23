@@ -78,11 +78,47 @@ class SovereignEngine {
         const defaults = {
             ...spawnPos, vx: 0, vy: 0,
             health: 30, size: 6, color: '#ff3333',
-            ai_type: 'chase' // Default AI chases player
+            ai_type: 'chase', // Default AI chases player
+            sprite: [
+                [0, 1, 0],
+                [1, 1, 1],
+                [0, 1, 0]
+            ],
+            spriteColors: ['#ff3333']
         };
         this.enemies.push({ ...defaults, ...options });
     }
 
+    spawnBoss(options = {}) {
+        const spawnPos = this.getEnemySpawnPosition();
+        const defaults = {
+            ...spawnPos, vx: 0, vy: 0,
+            health: 500, size: 25, color: '#ff00ff',
+            ai_type: 'chase',
+            isBoss: true, // Special flag for tracking
+            sprite: [
+                [0, 1, 1, 0, 1, 1, 0],
+                [1, 2, 2, 1, 2, 2, 1],
+                [1, 2, 2, 2, 2, 2, 1],
+                [1, 1, 2, 2, 2, 1, 1],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 0, 1, 0, 1, 0, 0]
+            ],
+            spriteColors: ['#ff00ff', '#ff99ff']
+        };
+        const boss = { ...defaults, ...options };
+        // Boss health and score should scale with level
+        boss.health = (defaults.health + this.level * 150);
+        boss.scoreValue = 100 + this.level * 50;
+        this.enemies.push(boss);
+    }
+
+    /**
+     * Spawns a power-up item on the map.
+     * @param {number} x - The x-coordinate.
+     * @param {number} y - The y-coordinate.
+     * @param {string} type - The key of the power-up from powerUpTypes.
+     */
     spawnPowerUp(x, y, type) {
         const powerUpType = powerUpTypes[type];
         if (powerUpType) {
@@ -96,6 +132,10 @@ class SovereignEngine {
         }
     }
 
+    /**
+     * Applies the effect of a collected power-up to the player.
+     * @param {object} powerUp - The power-up object that was collected.
+     */
     applyPowerUp(powerUp) {
         const powerUpType = powerUpTypes[powerUp.type];
         if (powerUpType) {
@@ -226,7 +266,11 @@ class SovereignEngine {
                     proj.life = 0;
                     this.spawnParticles(enemy.x, enemy.y, '#ff6b00', 5);
                     if (enemy.health <= 0) {
-                        this.score += 10;
+                        if (enemy.isBoss) {
+                            this.score += enemy.scoreValue || 250;
+                        } else {
+                            this.score += 10;
+                        }
                         this.spawnParticles(enemy.x, enemy.y, '#ffff00', 10);
                         // 10% chance to drop a power-up on kill
                         if (Math.random() < 0.1) {
@@ -255,11 +299,7 @@ class SovereignEngine {
                 }
                 this.spawnParticles(this.player.x, this.player.y, '#ff3333', 3);
                 enemy.health = 0;
-                if (this.player.health <= 0) {
-                    console.log('Game Over! Score:', this.score);
-                    this.player.health = 100;
-                    this.score = 0;
-                }
+                // Game over and life-loss logic is now handled by the patch in sovereign-engine.html
             }
         });
 
@@ -290,6 +330,55 @@ class SovereignEngine {
         }
     }
     
+    /**
+     * Draws an entity using a 2D array of pixel data.
+     * @param {object} entity - The entity to draw (e.g., player, enemy).
+     * @returns {boolean} - True if a sprite was drawn, false otherwise.
+     */
+    drawSprite(entity) {
+         if (!entity.sprite || !entity.sprite.length || !entity.sprite[0].length) return false;
+ 
+         const sprite = entity.sprite;
+         const spriteHeight = sprite.length;
+         const spriteWidth = sprite[0].length;
+ 
+         const maxDim = Math.max(spriteWidth, spriteHeight);
+         const pixelSize = (entity.size * 2) / maxDim;
+ 
+         const totalWidth = spriteWidth * pixelSize;
+         const totalHeight = spriteHeight * pixelSize;
+ 
+         this.ctx.save();
+         this.ctx.translate(entity.x, entity.y);
+ 
+         // Determine rotation angle. Sprites are designed facing "up" (negative y).
+         // atan2(y, x) gives angle from positive x-axis. We add PI/2 (90 deg) to align "up" with 0 angle.
+         let angle = 0;
+         if (entity === this.player) {
+             angle = Math.atan2(this.player.lastMoveDir.y, this.player.lastMoveDir.x) + Math.PI / 2;
+         } else if (entity.vx !== 0 || entity.vy !== 0) { // For other moving entities
+             angle = Math.atan2(entity.vy, entity.vx) + Math.PI / 2;
+         }
+         this.ctx.rotate(angle);
+ 
+         const startX = -totalWidth / 2;
+         const startY = -totalHeight / 2;
+ 
+         for (let y = 0; y < spriteHeight; y++) {
+             for (let x = 0; x < spriteWidth; x++) {
+                 const colorIndex = sprite[y][x];
+                 if (colorIndex > 0) { // 0 is transparent
+                     const color = entity.spriteColors ? (entity.spriteColors[colorIndex - 1] || entity.color) : entity.color;
+                     this.ctx.fillStyle = color;
+                     this.ctx.fillRect(Math.round(startX + x * pixelSize), Math.round(startY + y * pixelSize), pixelSize, pixelSize);
+                 }
+             }
+         }
+ 
+         this.ctx.restore();
+         return true;
+    }
+
     render() {
         this.ctx.fillStyle = 'rgba(10, 10, 10, 0.1)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -343,28 +432,36 @@ class SovereignEngine {
         
         // Enemies
         this.enemies.forEach(enemy => {
-            this.ctx.fillStyle = enemy.color;
             this.ctx.shadowColor = enemy.color;
             this.ctx.shadowBlur = 4;
-            this.ctx.beginPath();
-            this.ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
-            this.ctx.fill();
+
+            const drawn = this.drawSprite(enemy);
+            if (!drawn) {
+                // Fallback to circle if no sprite
+                this.ctx.fillStyle = enemy.color;
+                this.ctx.beginPath();
+                this.ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
             this.ctx.shadowBlur = 0;
         });
         
         // Player
-        this.ctx.fillStyle = this.player.color;
         this.ctx.shadowColor = this.player.color;
         this.ctx.shadowBlur = 8;
-        this.ctx.beginPath();
-        this.ctx.arc(this.player.x, this.player.y, this.player.size, 0, Math.PI * 2);
-        this.ctx.fill();
+        const playerDrawn = this.drawSprite(this.player);
+        if (!playerDrawn) {
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, this.player.size, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
         this.ctx.shadowBlur = 0;
         
         // Health & Shield bar UI
         const barWidth = 150;
         const barHeight = 10;
-        const healthPercent = Math.max(0, this.player.health / 100);
+        const healthPercent = Math.max(0, this.player.health / (this.player.maxHealth || 100));
         const shieldPercent = Math.max(0, this.player.shield / 50); // Assuming shield max is 50
         const xPos = this.canvas.width - barWidth - 20;
         const yPos = 20;

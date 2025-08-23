@@ -30,5 +30,30 @@ const powerUpTypes = {
         remove: (player, engine) => {
             player.damageMultiplier = 1;
         }
+    },
+    healthPack: {
+        color: '#00ff00',
+        symbol: '✚',
+        duration: 0, // Instant effect
+        apply: (player, engine) => {
+            player.health += 50;
+            if (player.health > (player.maxHealth || 100)) {
+                player.health = player.maxHealth || 100;
+            }
+        },
+        remove: (player, engine) => {}
+    },
+    nuke: {
+        color: '#ffffff',
+        symbol: '☢',
+        duration: 0, // Instant effect
+        apply: (player, engine) => {
+            engine.enemies.forEach(enemy => {
+                engine.score += 10; // Grant score for each enemy killed
+                engine.spawnParticles(enemy.x, enemy.y, '#ffff00', 10); // Standard death particles
+                enemy.health = 0; // Mark for removal
+            });
+        },
+        remove: (player, engine) => {}
     }
 };
