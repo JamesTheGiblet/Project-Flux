@@ -26,13 +26,31 @@ self.addEventListener('install', event => {
   );
 });
 
+// This allows the new service worker to take over when prompted by the app.
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
 // Intercept network requests and serve from cache if available.
+// This uses a "stale-while-revalidate" strategy.
 self.addEventListener('fetch', event => {
+  // We only want to cache GET requests.
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(response => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+        return response || fetchPromise;
+      });
+    })
   );
 });
 

@@ -139,6 +139,58 @@
 		opacity: 0;
 		transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 	}
+	#gameOverScreen, #highScoreScreen {
+		position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+		background: rgba(10, 10, 20, 0.95);
+		display: none; /* Initially hidden */
+		align-items: center; justify-content: center;
+		z-index: 1002; /* Above other overlays */
+		-webkit-backdrop-filter: blur(5px);
+		backdrop-filter: blur(5px);
+		color: #fff;
+	}
+	.game-over-container, .highscore-container {
+		text-align: center;
+		background: rgba(0,0,0,0.5);
+		padding: 40px;
+		border: 2px solid #ff6b00;
+		box-shadow: 0 0 20px #ff6b00;
+		width: 90%;
+		max-width: 500px;
+	}
+	.highscore-container {
+		border-color: #00ff88;
+		box-shadow: 0 0 20px #00ff88;
+	}
+	.game-over-container h1, .highscore-container h1 {
+		color: #ff6b00; font-size: 48px; text-shadow: 0 0 10px #ff6b00; margin-bottom: 20px;
+	}
+	.highscore-container h1 {
+		color: #00ff88; text-shadow: 0 0 10px #00ff88;
+	}
+	.final-score-label { font-size: 24px; color: #ffdd00; margin-bottom: 30px; }
+	#highScoreForm { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+	#highScoreForm input { padding: 15px; font-size: 18px; text-align: center; width: 100%; }
+	#highScoreForm button { padding: 15px; font-size: 18px; }
+	#highScoreList { list-style-type: none; padding: 0; margin-bottom: 30px; max-height: 40vh; overflow-y: auto; font-size: 18px; text-align: left; }
+	#highScoreList li { display: flex; justify-content: space-between; padding: 8px 15px; border-bottom: 1px solid #333; }
+	#highScoreList li:nth-child(odd) { background: rgba(255,255,255,0.05); }
+	#highScoreList li .name { color: #00ffff; font-weight: bold; }
+	#highScoreList li .score { color: #ffdd00; }
+	#comboDisplay {
+		position: absolute;
+		top: 100px;
+		left: 50%;
+		transform: translateX(-50%) scale(1.2);
+		color: #ffdd00;
+		font-size: 48px;
+		font-weight: bold;
+		text-shadow: 0 0 10px #ff6b00, 0 0 20px #ff6b00;
+		pointer-events: none;
+		z-index: 1000;
+		opacity: 0;
+		transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+	}
 	#comboDisplay.visible {
 		opacity: 1;
 		transform: translateX(-50%) scale(1);
@@ -385,16 +437,48 @@
 		margin-top: 30px;
 		color: #aaa;
 	}
+	#updateNotification {
+		display: none; 
+		position: fixed; 
+		bottom: 20px; 
+		left: 50%; 
+		transform: translateX(-50%); 
+		background: #ff6b00; 
+		color: #000; 
+		padding: 15px; 
+		border-radius: 5px; 
+		z-index: 2000; 
+		box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+		font-weight: bold;
+	}
+	#reloadButton {
+		background: #000; 
+		color: #ff6b00; 
+		border: 1px solid #ff6b00; 
+		padding: 5px 10px; 
+		margin-left: 15px; 
+		cursor: pointer;
+		transition: background-color 0.3s, color 0.3s;
+	}
+	#reloadButton:hover {
+		background: #ff6b00;
+		color: #000;
+	}
 	</style>
 </head>
 <body>
 	<div class="container">
 		<div class="game-area">
-			<canvas id="gameCanvas"></canvas>
+			<div id="updateNotification">
+				<span>A new version of the game is available!</span>
+				<button id="reloadButton">REFRESH</button>
+			</div>
+			<canvas id="gameCanvas">Your browser does not support the canvas element.</canvas>
 			<div id="mainMenu">
 				<div class="menu-container">
 					<h1 class="menu-title">SOVEREIGN ENGINE</h1>
 					<button id="startButton" class="menu-button">START GAME</button>
+					<button id="highScoreButton" class="menu-button">HIGH SCORES</button>
 					<button id="installButton" class="menu-button install-app-btn" title="Install to your device for offline play">INSTALL APP</button>
 					<p class="menu-highscore">High Score: <span id="menuHighScore">0</span></p>
 				</div>
@@ -425,6 +509,23 @@
 						</button>
 					</div>
 					<button id="continueButton">Continue to Next Level</button>
+				</div>
+			</div>
+			<div id="gameOverScreen">
+				<div class="game-over-container">
+					<h1>GAME OVER</h1>
+					<p class="final-score-label">Final Score: <span id="finalScore">0</span></p>
+					<form id="highScoreForm">
+						<input type="text" id="playerNameInput" class="preset-name-input" placeholder="ENTER YOUR NAME" maxlength="10" minlength="3" required>
+						<button type="submit" class="apply-btn">SAVE SCORE</button>
+					</form>
+				</div>
+			</div>
+			<div id="highScoreScreen">
+				<div class="highscore-container">
+					<h1>HIGH SCORES</h1>
+					<ol id="highScoreList"></ol>
+					<button id="backToMenuButton" class="menu-button">MAIN MENU</button>
 				</div>
 			</div>
 			<div id="comboDisplay"></div>
@@ -533,6 +634,17 @@ player.color = '#ffff00';</code></pre>
             </div>
 
             <div class="mod-section">
+                <h3>🕹️ CONTROL MOD</h3>
+                <select id="controlSelector" title="Select control scheme preset" onchange="selectPreset('control', this.value)"></select>
+                <textarea class="code-editor" id="controlCode" placeholder="Write or modify control scheme here..."></textarea>
+                <button class="apply-btn" onclick="applyMod('control')">Apply Controls</button>
+                <div class="save-preset-area">
+                    <input type="text" class="preset-name-input" id="controlPresetName" placeholder="Save as new preset...">
+                    <button class="save-btn" onclick="savePreset('control')">💾 Save</button>
+                </div>
+            </div>
+
+            <div class="mod-section">
                 <h3>❤️ LIFE MOD</h3>
                 <select id="lifeSelector" title="Select life mod preset" onchange="selectPreset('life', this.value)"></select>
                 <textarea class="code-editor" id="lifeCode" placeholder="Write or modify life gain rules here..."></textarea>
@@ -580,6 +692,7 @@ player.color = '#ffff00';</code></pre>
     <script src="mods/weapons/weapons.js"></script>
     <script src="mods/rules/rules.js"></script>
     <script src="mods/player/player.js"></script>
+    <script src="mods/controls/controls.js"></script>
     <script src="mods/health/life.js"></script>
     <script src="mods/enemies/boss-ai.js"></script>
     <script src="mods/power-ups/power-ups.js"></script>
@@ -613,13 +726,17 @@ player.color = '#ffff00';</code></pre>
         function applyMod(modType) {
             const code = document.getElementById(`${modType}Code`).value;
             try {
-                // Using eval is the most robust way to parse a full function string provided by the user.
-                // The parentheses `()` turn the function declaration into an expression, returning the function object.
-                const modFunc = eval(`(${code})`);
-
-                if (typeof modFunc !== 'function') {
-                    throw new Error("The provided code is not a valid function definition.");
-                }
+				if (modType === 'seed') {
+					const seedValue = parseInt(code);
+					if (isNaN(seedValue)) {
+						throw new Error("Seed must be a number.");
+					}
+					game.setSeed(seedValue);
+				} else {
+					const modFunc = eval(`(${code})`);
+					if (typeof modFunc !== 'function') {
+						throw new Error("The provided code is not a valid function definition.");
+					}
 
                 switch(modType) {
                     case 'weapon':
@@ -631,25 +748,22 @@ player.color = '#ffff00';</code></pre>
                     case 'player':
                         modFunc(game.player);
                         break;
+                    case 'control':
+                        game.controlUpdate = modFunc;
+                        break;
                     case 'life':
                         game.lifeRuleUpdate = modFunc;
-                        break;
-                    case 'seed':
-                        const seedValue = parseInt(code);
-                        if (isNaN(seedValue)) {
-                            throw new Error("Seed must be a number.");
-                        }
-                        game.setSeed(seedValue);
                         break;
                     case 'bossAI':
                         game.bossAIUpdate = modFunc;
                         break;
                 }
-                console.log(`${modType.charAt(0).toUpperCase() + modType.slice(1)} mod applied!`);
-            } catch (e) {
-                alert(`Error in ${modType} code: ${e.message}`);
-            }
-        }
+				}
+				console.log(`${modType.charAt(0).toUpperCase() + modType.slice(1)} mod applied!`);
+        } catch (e) {
+			console.error(`Error in ${modType} code: ${e.message}`);
+		}
+		} // <-- Add this closing brace to end applyMod function
 
         function savePreset(modType) {
             const nameInput = document.getElementById(`${modType}PresetName`);
@@ -704,8 +818,8 @@ player.color = '#ffff00';</code></pre>
         }
 
         function initializeModSystem() {
-            game.allPresets = { weapon: {}, rule: {}, player: {}, life: {}, bossAI: {}, seed: {} };
-            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, life: lifePresets, bossAI: bossAIPresets, seed: { default: '12345' } };
+            game.allPresets = { weapon: {}, rule: {}, player: {}, control: {}, life: {}, bossAI: {}, seed: {} };
+            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, control: controlPresets, life: lifePresets, bossAI: bossAIPresets, seed: { default: '12345' } };
 
             for (const modType in game.allPresets) {
                 // Seed mod doesn't have a selector dropdown
@@ -733,6 +847,46 @@ player.color = '#ffff00';</code></pre>
         let game;
         window.onload = function() {
             game = new SovereignEngine();
+
+			// --- HIGH SCORE & LEADERBOARD SYSTEM ---
+			const gameOverScreen = document.getElementById('gameOverScreen');
+			const highScoreScreen = document.getElementById('highScoreScreen');
+			const highScoreForm = document.getElementById('highScoreForm');
+			const playerNameInput = document.getElementById('playerNameInput');
+			const highScoreList = document.getElementById('highScoreList');
+			const highScoreButton = document.getElementById('highScoreButton');
+			const backToMenuButton = document.getElementById('backToMenuButton');
+			const HIGH_SCORES_KEY = 'sovereign_highscores';
+
+			function getHighScores() {
+				const scoresJSON = localStorage.getItem(HIGH_SCORES_KEY);
+				return scoresJSON ? JSON.parse(scoresJSON) : [];
+			}
+
+			function saveHighScore(name, score) {
+				const scores = getHighScores();
+				scores.push({ name, score });
+				scores.sort((a, b) => b.score - a.score);
+				scores.splice(10); // Keep top 10
+				localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores));
+			}
+
+			function updateHighScoreDisplay() {
+				const scores = getHighScores();
+				highScoreList.innerHTML = '';
+				if (scores.length === 0) {
+					highScoreList.innerHTML = '<li>No scores yet. Be the first!</li>';
+				} else {
+					scores.forEach(entry => {
+						const li = document.createElement('li');
+						li.innerHTML = `<span class="name">${entry.name}</span> <span class="score">${entry.score}</span>`;
+						highScoreList.appendChild(li);
+					});
+				}
+				const topScore = scores.length > 0 ? scores[0].score : 0;
+				document.getElementById('menuHighScore').textContent = topScore;
+				document.getElementById('highScore').textContent = topScore;
+			}
 
 			// --- PWA INSTALL BUTTON LOGIC ---
 			let deferredInstallPrompt;
@@ -762,13 +916,13 @@ player.color = '#ffff00';</code></pre>
 
 			const mainMenu = document.getElementById('mainMenu');
 			const pauseOverlay = document.getElementById('pauseOverlay');
-			const highScore = parseInt(localStorage.getItem('sovereign_highscore') || '0');
-			document.getElementById('highScore').textContent = highScore;
+			updateHighScoreDisplay(); // Initial load of high scores
 
 			// --- CORE GAME STATE & SYSTEMS PATCHING ---
 			game.player.lives = 3;
 			game.player.maxLives = 5; // Set a cap
 			game.state = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, UPGRADE
+			game.controlUpdate = function(engine, dt) {}; // Default empty function
 			game.lifeRuleUpdate = function(engine, dt) {}; // Default empty function
 			// --- LEVEL & BOSS STATE ---
 			game.level = 1;
@@ -838,6 +992,30 @@ player.color = '#ffff00';</code></pre>
 					// Only run game logic when in the 'PLAYING' state
 					if (this.state !== 'PLAYING') return;
 
+					// --- HACKABLE CONTROLS WRAPPER ---
+					// This wrapper allows a mod to completely take over player input.
+					// It works by running the mod's control function, then temporarily
+					// disabling the engine's built-in controls before calling the
+					// original update loop.
+
+					// 1. Store original input states.
+					const originalKeys = {...this.keys}; // Shallow copy of the keys object
+					const originalMouseDownState = this.isMouseDown;
+
+					// 2. Run the currently selected control scheme function.
+					// This function is responsible for all player movement and shooting actions.
+					this.controlUpdate(this, dt);
+
+					// 3. Disable the engine's built-in control handlers by clearing their state
+					// before the original engine update can process them.
+					this.isMouseDown = false;
+					if (this.keys) {
+						this.keys['KeyW'] = this.keys['KeyA'] = this.keys['KeyS'] = this.keys['KeyD'] = false;
+						this.keys['ArrowUp'] = this.keys['ArrowLeft'] = this.keys['ArrowDown'] = this.keys['ArrowRight'] = false;
+						this.keys['Space'] = false;
+					}
+					// --- END NEW CONTROLS PATCH ---
+
 					// Check for player death before the main update
 					if (this.player.health <= 0) {
 						this.player.lives--;
@@ -854,17 +1032,10 @@ player.color = '#ffff00';</code></pre>
 							playDeathSound();
 							this.shutdown(); // Properly close the audio context
 
-							const currentHighScore = parseInt(localStorage.getItem('sovereign_highscore') || '0');
-							let newHighScore = currentHighScore;
-							if (this.score > currentHighScore) {
-								newHighScore = this.score;
-								localStorage.setItem('sovereign_highscore', this.score);
-								document.getElementById('highScore').textContent = newHighScore;
-							}
-
-							pauseOverlay.innerHTML = `GAME OVER<br>
-								<small style="font-size: 24px;">Final Score: ${this.score}</small><small style="font-size: 18px; color: #aaa; margin-top: 10px;">High Score: ${newHighScore}</small><br><small style="font-size: 20px; margin-top: 20px;">Press 'R' to Restart</small>`;
-							pauseOverlay.style.display = 'flex';
+							// Hide other overlays and show the name entry screen
+							pauseOverlay.style.display = 'none';
+							document.getElementById('finalScore').textContent = this.score;
+							gameOverScreen.style.display = 'flex';
 							return; // Stop this frame
 						}
 					}
@@ -882,6 +1053,10 @@ player.color = '#ffff00';</code></pre>
 
 					// Run the original engine update
 					originalUpdate.call(this, dt);
+
+					// 4. Restore input states so they can be read by our control mod on the next frame.
+					this.isMouseDown = originalMouseDownState;
+					this.keys = originalKeys;
 
 					// Run the hackable life rules
 					this.lifeRuleUpdate(this, dt);
@@ -904,6 +1079,29 @@ player.color = '#ffff00';</code></pre>
 			document.getElementById('startButton').addEventListener('click', () => {
 				mainMenu.style.display = 'none';
 				game.startGame();
+			});
+
+			highScoreButton.addEventListener('click', () => {
+				updateHighScoreDisplay();
+				mainMenu.style.display = 'none';
+				highScoreScreen.style.display = 'flex';
+			});
+
+			backToMenuButton.addEventListener('click', () => {
+				highScoreScreen.style.display = 'none';
+				mainMenu.style.display = 'flex';
+			});
+
+			highScoreForm.addEventListener('submit', (e) => {
+				e.preventDefault();
+				const playerName = playerNameInput.value.trim().toUpperCase();
+				if (playerName) {
+					saveHighScore(playerName, game.score);
+					updateHighScoreDisplay();
+					gameOverScreen.style.display = 'none';
+					highScoreScreen.style.display = 'flex';
+					playerNameInput.value = '';
+				}
 			});
 
 			// --- UPGRADE SCREEN LISTENERS ---
@@ -986,7 +1184,8 @@ player.color = '#ffff00';</code></pre>
 					}
 				}
 				if (key === 'r' && game.state === 'GAMEOVER') {
-					game.startGame();
+					gameOverScreen.style.display = 'none';
+					mainMenu.style.display = 'flex';
 				}
 			});
 
@@ -1006,21 +1205,23 @@ player.color = '#ffff00';</code></pre>
 
             // Select and apply default mods on startup
             selectPreset('weapon', 'default');
-            selectPreset('rule', 'level-progression');
             selectPreset('player', 'default');
+            selectPreset('control', 'twin-stick');
+            selectPreset('rule', 'level-progression');
             selectPreset('life', 'points-based');
             selectPreset('seed', 'default'); // Load default seed into input
             selectPreset('bossAI', 'default');
+            applyMod('player');
+            applyMod('control');
             applyMod('life');
             applyMod('rule');
-            applyMod('player');
             applyMod('bossAI');
 
             console.log(`
 🚀 SOVEREIGN ENGINE LOADED
 =======================
-WASD/Arrows: Move
-Mouse: Aim | Click/Space: Shoot
+Controls are now hackable!
+Current: Twin-Stick (Mouse to Move, WASD to Shoot)
 Edit code in the panel →
 Every system is hackable!
 `);

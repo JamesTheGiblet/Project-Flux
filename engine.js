@@ -501,9 +501,11 @@ class SovereignEngine {
         // Power-up timers
         this.activePowerUps.forEach(p => {
             p.timeRemaining -= dt;
-            // Power-ups with 0 duration are permanent or based on other logic (e.g., shields)
-            if (p.timeRemaining <= 0) {
-                p.remove(this.player, this);
+            // Only process removal for expirable power-ups whose time is up.
+            if (p.duration > 0 && p.timeRemaining <= 0) {
+                // Safely call the remove function only if it exists.
+                // This prevents crashes if a power-up is defined without a remove method.
+                if (typeof p.remove === 'function') p.remove(this.player, this);
             }
         });
 
