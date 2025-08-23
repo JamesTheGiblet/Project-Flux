@@ -10,10 +10,10 @@ const rulesPresets = {
     }
 
     // Spawn enemies for the current wave
-    if (engine.waveEnemiesSpawned < engine.waveEnemiesTotal && Math.random() < 0.05) {
+    if (engine.waveEnemiesSpawned < engine.waveEnemiesTotal && engine.random() < 0.05) {
       engine.spawnEnemy({
         health: 30 + engine.level * 5,
-        size: 6 + Math.random() * engine.level,
+        size: 6 + engine.random() * engine.level,
       });
       engine.waveEnemiesSpawned++;
     }
@@ -31,27 +31,31 @@ const rulesPresets = {
       } else {
         engine.gameState = 'INTERMISSION';
         engine.intermissionTime = engine.gameTime + 3; // 3 second break
+        engine.playWaveClearSound();
       }
     }
 
   } else if (engine.gameState === 'BOSS') {
     // --- BOSS LOGIC ---
-    const bossExists = engine.enemies.some(e => e.isBoss);
-    if (!bossExists && engine.gameTime > engine.intermissionTime) {
-      engine.spawnBoss({
-        ai_type: 'boss_pattern', // Use the new AI
-        patterns: ['spiral_shot', 'charge', 'burst_shot'],
-        patternTimer: 5, // Start with a 5 second pattern
-      });
-    }
+    const isBossOnScreen = engine.enemies.some(e => e.isBoss);
 
-    // If boss is defeated, progress to next level
-    if (bossExists && !engine.enemies.some(e => e.isBoss)) {
-      engine.level++;
+    // Check for boss defeat
+    if (engine.wasBossPresent && !isBossOnScreen) {
+      // Boss was here, but now it's gone. It must have been defeated.
+      engine.level++; // Level up
       engine.wave = 1;
       engine.gameState = 'INTERMISSION';
       engine.intermissionTime = engine.gameTime + 5; // 5 second break after boss
+      engine.playLevelCompleteSound();
+    } else if (!isBossOnScreen && engine.gameTime > engine.intermissionTime) {
+      // No boss is present, and the intermission is over. Spawn one.
+      engine.spawnBoss({
+        patterns: ['spiral_shot', 'charge', 'burst_shot'],
+        patternTimer: 5, // Start with a 5 second pattern (not random)
+      });
     }
+    // At the end of the frame, update the flag for the next frame.
+    engine.wasBossPresent = isBossOnScreen;
 
   } else if (engine.gameState === 'INTERMISSION') {
     // --- INTERMISSION LOGIC ---
@@ -63,18 +67,18 @@ const rulesPresets = {
 }`,
     endless: `function update(engine, dt) {
   // Spawn standard enemies that chase the player.
-  if (Math.random() < 0.015) {
+  if (engine.random() < 0.015) {
     engine.spawnEnemy(); // Uses default enemy properties.
   }
   // Gradually increase the speed of chasing enemies.
   if (engine.gameTime > engine.lastDifficulty + 10) {
     engine.enemySpeed += 10;
     engine.lastDifficulty = engine.gameTime;
-  }
+  } // No random here
 }`,
     horde: `function update(engine, dt) {
   // Spawn weaker enemies at a much higher rate.
-  if (Math.random() < 0.1) {
+  if (engine.random() < 0.1) {
     engine.spawnEnemy({ health: 15, size: 5, color: '#ff5555' });
   }
   // Difficulty scaling is faster in horde mode.
@@ -85,16 +89,16 @@ const rulesPresets = {
 }`,
     meteors: `function update(engine, dt) {
   // This rule ignores engine.enemySpeed and lastDifficulty.
-  // It creates "meteor" enemies that don't chase the player.
-  if (Math.random() < 0.08) {
+  // It creates "meteor" enemies that don't chase the player. (Uses engine.random())
+  if (engine.random() < 0.08) {
     const spawnPos = engine.getEnemySpawnPosition();
     
     // Meteors fly towards the general center of the screen.
-    const targetX = engine.canvas.width / 2 + (Math.random() - 0.5) * 400;
-    const targetY = engine.canvas.height / 2 + (Math.random() - 0.5) * 400;
+    const targetX = engine.canvas.width / 2 + (engine.random() - 0.5) * 400;
+    const targetY = engine.canvas.height / 2 + (engine.random() - 0.5) * 400;
     const dx = targetX - spawnPos.x;
     const dy = targetY - spawnPos.y;
-    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1; // Not random
     const speed = 80 + Math.random() * 100;
 
     engine.spawnEnemy({
@@ -125,6 +129,30 @@ const rulesPresets = {
     const types = Object.keys(powerUpTypes);
     const randomType = types[Math.floor(Math.random() * types.length)];
     engine.spawnPowerUp(x, y, randomType);
+  }
+}`,
+    'mixed-forces': `function update(engine, dt) {
+  // This rule spawns a mix of chasers and the new shooter enemies.
+
+  // Spawn chasers
+  if (Math.random() < 0.01) {
+    engine.spawnEnemy({ ai_type: 'chase' });
+  }
+
+  // Spawn shooters less frequently
+  if (Math.random() < 0.005) {
+    engine.spawnEnemy({
+      ai_type: 'shooter',
+      health: 20,
+      color: '#ff8800',
+      sprite: [
+        [0, 1, 0],
+        [1, 1, 1],
+        [0, 2, 0]
+      ],
+      spriteColors: ['#ff8800', '#ffff00']
+
+    });
   }
 }`
 };

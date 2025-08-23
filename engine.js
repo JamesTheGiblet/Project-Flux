@@ -30,8 +30,61 @@ class SovereignEngine {
         this.lastDifficulty = 0;
         
         this.weaponShoot = this.defaultShoot;
+        // --- PRNG ---
+        this.seed = Date.now(); // Default seed to current time
+        this.currentSeed = this.seed; // Internal state for PRNG
+        
+        this.bossAIUpdate = () => {}; // Will be set by applyMod on load
         this.rulesUpdate = () => {}; // Will be set by applyMod on load
         
+        this.spriteSets = [
+            // Level 1 (Default Red/Purple)
+            {
+                chaser: {
+                    sprite: [[0,1,0],[1,1,1],[0,1,0]],
+                    spriteColors: ['#ff3333']
+                },
+                shooter: {
+                    sprite: [[0,1,0],[1,2,1],[1,1,1]],
+                    spriteColors: ['#ff8800', '#ffff00']
+                },
+                boss: {
+                    sprite: [[0,1,1,0,1,1,0],[1,2,2,1,2,2,1],[1,2,2,2,2,2,1],[1,1,2,2,2,1,1],[0,1,1,1,1,1,0],[0,0,1,0,1,0,0]],
+                    spriteColors: ['#ff00ff', '#ff99ff']
+                }
+            },
+            // Level 2 (Blue/Cyan)
+            {
+                chaser: {
+                    sprite: [[1,0,1],[0,1,0],[1,0,1]],
+                    spriteColors: ['#00aaff']
+                },
+                shooter: {
+                    sprite: [[1,1,0],[1,2,1],[1,1,0]],
+                    spriteColors: ['#00ffff', '#ffffff']
+                },
+                boss: {
+                    sprite: [[0,1,1,1,0],[1,2,2,2,1],[1,2,1,2,1],[1,2,2,2,1],[0,1,0,1,0]],
+                    spriteColors: ['#0088ff', '#aaddff']
+                }
+            },
+            // Level 3 (Green/Yellow)
+            {
+                chaser: {
+                    sprite: [[1,1,1],[1,0,1],[1,1,1]],
+                    spriteColors: ['#00ff00']
+                },
+                shooter: {
+                    sprite: [[0,2,0],[1,2,1],[0,2,0]],
+                    spriteColors: ['#ffff00', '#ffffff']
+                },
+                boss: {
+                    sprite: [[0,1,0,1,0],[1,1,1,1,1],[0,1,2,1,0],[1,1,1,1,1],[0,1,0,1,0]],
+                    spriteColors: ['#88ff00', '#ffff88']
+                }
+            }
+        ];
+
         this.setupEvents();
         this.gameLoop();
     }
@@ -47,6 +100,16 @@ class SovereignEngine {
             console.warn("Web Audio API is not supported in this browser. Audio disabled.");
             this.audioContext = null; // Disable audio
         }
+    }
+    
+    setSeed(seed) {
+        this.seed = seed;
+        this.currentSeed = seed;
+    }
+
+    random() {
+        this.currentSeed = (this.currentSeed * 9301 + 49297) % 233280;
+        return this.currentSeed / 233280;
     }
 
     shutdown() {
@@ -95,14 +158,14 @@ class SovereignEngine {
         const gain = this.audioContext.createGain();
         osc.connect(gain);
         gain.connect(this.audioContext.destination);
-    
+
         osc.type = 'square';
         gain.gain.setValueAtTime(0.1, time);
         osc.frequency.setValueAtTime(800, time);
-    
+
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
         osc.frequency.exponentialRampToValueAtTime(200, time + 0.1);
-    
+
         osc.start(time);
         osc.stop(time + 0.1);
     }
@@ -143,56 +206,157 @@ class SovereignEngine {
         osc.start(time);
         osc.stop(time + 0.2);
     }
+    playShooterSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.1, time);
+        osc.frequency.setValueAtTime(600, time);
+
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(100, time + 0.2);
+
+        osc.start(time);
+        osc.stop(time + 0.2);
+    }
+
+    playPlayerHitSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
     
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.2, time);
+        osc.frequency.setValueAtTime(300, time);
+    
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(100, time + 0.2);
+    
+        osc.start(time);
+        osc.stop(time + 0.2);
+    }
+
+    playPhaseTransitionSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, time);
+        osc.frequency.setValueAtTime(100, time);
+        osc.frequency.exponentialRampToValueAtTime(500, time + 0.3);
+    
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+    
+        osc.start(time);
+        osc.stop(time + 0.4);
+    }
+
+    playWaveClearSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.2, time);
+        osc.frequency.setValueAtTime(660, time);
+        osc.frequency.setValueAtTime(880, time + 0.1);
+    
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+    
+        osc.start(time);
+        osc.stop(time + 0.3);
+    }
+
+    playLevelCompleteSound() {
+        if (!this.audioContext) return;
+        const time = this.audioContext.currentTime;
+        const osc1 = this.audioContext.createOscillator();
+        const osc2 = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.audioContext.destination);
+    
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        gain.gain.setValueAtTime(0.3, time);
+        osc1.frequency.setValueAtTime(523.25, time); // C5
+        osc2.frequency.setValueAtTime(659.25, time); // E5
+        osc1.frequency.setValueAtTime(659.25, time + 0.15); // E5
+        osc2.frequency.setValueAtTime(783.99, time + 0.15); // G5
+        osc1.frequency.setValueAtTime(783.99, time + 0.3); // G5
+        osc2.frequency.setValueAtTime(1046.50, time + 0.3); // C6
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.6);
+        osc1.start(time);
+        osc1.stop(time + 0.6);
+        osc2.start(time);
+        osc2.stop(time + 0.6);
+    }
+
     getEnemySpawnPosition() {
-        const edge = Math.floor(Math.random() * 4);
+        const edge = Math.floor(this.random() * 4);
         let x, y;
         const offset = 30;
         switch(edge) {
-            case 0: x = Math.random() * this.canvas.width; y = -offset; break;
-            case 1: x = this.canvas.width + offset; y = Math.random() * this.canvas.height; break;
-            case 2: x = Math.random() * this.canvas.width; y = this.canvas.height + offset; break;
-            case 3: x = -offset; y = Math.random() * this.canvas.height; break;
+            case 0: x = this.random() * this.canvas.width; y = -offset; break;
+            case 1: x = this.canvas.width + offset; y = this.random() * this.canvas.height; break;
+            case 2: x = this.random() * this.canvas.width; y = this.canvas.height + offset; break;
+            case 3: x = -offset; y = this.random() * this.canvas.height; break;
         }
         return { x, y };
     }
 
     spawnEnemy(options = {}) {
         const spawnPos = this.getEnemySpawnPosition();
+        const levelSpriteSet = this.spriteSets[(this.level - 1) % this.spriteSets.length]; // Use level-based sprite set
+        const enemyType = options.ai_type || 'chaser';
+        const spriteData = levelSpriteSet[enemyType] || levelSpriteSet.chaser;
+
         const defaults = {
             ...spawnPos, vx: 0, vy: 0,
             health: 30, size: 6, color: '#ff3333',
-            ai_type: 'chase', // Default AI chases player
-            sprite: [
-                [0, 1, 0],
-                [1, 1, 1],
-                [0, 1, 0]
-            ],
-            spriteColors: ['#ff3333']
+            ai_type: 'chase',
+            ...spriteData
         };
         this.enemies.push({ ...defaults, ...options });
     }
 
     spawnBoss(options = {}) {
         const spawnPos = this.getEnemySpawnPosition();
+        const levelSpriteSet = this.spriteSets[(this.level - 1) % this.spriteSets.length]; // Boss sprite set based on level
+        const spriteData = levelSpriteSet.boss;
         const defaults = {
             ...spawnPos, vx: 0, vy: 0,
             health: 500, size: 25, color: '#ff00ff',
-            ai_type: 'chase',
             isBoss: true, // Special flag for tracking
-            sprite: [
-                [0, 1, 1, 0, 1, 1, 0],
-                [1, 2, 2, 1, 2, 2, 1],
-                [1, 2, 2, 2, 2, 2, 1],
-                [1, 1, 2, 2, 2, 1, 1],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 0, 1, 0, 1, 0, 0]
-            ],
-            spriteColors: ['#ff00ff', '#ff99ff']
+            ...spriteData
         };
         const boss = { ...defaults, ...options };
+        // Boss AI patterns are now defined in the rules preset
+        boss.currentPattern = boss.patterns ? boss.patterns[0] : 'chase';
+        boss.patternTimer = 10;
+        boss.attackTimer = 0;
+        boss.ai_type = 'boss_pattern';
+        boss.isBoss = true;
+
         // Boss health and score should scale with level
         boss.health = (defaults.health + this.level * 150);
+        boss.maxHealth = boss.health;
         boss.scoreValue = 100 + this.level * 50;
         this.enemies.push(boss);
     }
@@ -214,6 +378,15 @@ class SovereignEngine {
                 type: type
             });
         }
+    }
+
+    spawnRandomPowerUp(x, y) {
+        // This is a helper function to spawn a random power-up from the available types.
+        // It was missing, causing a crash on enemy death.
+        const types = Object.keys(powerUpTypes); // powerUpTypes is global
+        if (types.length === 0) return; // No power-ups defined
+        const randomType = types[Math.floor(this.random() * types.length)];
+        this.spawnPowerUp(x, y, randomType);
     }
 
     /**
@@ -272,6 +445,20 @@ class SovereignEngine {
             this.player.x += moveDx * this.player.speed * dt;
             this.player.y += moveDy * this.player.speed * dt;
         }
+        
+        // Thruster effect: spawn particles if player is moving
+        if (dx !== 0 || dy !== 0) {
+            const thrusterAngle = Math.atan2(this.player.lastMoveDir.y, this.player.lastMoveDir.x) + Math.PI;
+            this.spawnParticles(this.player.x, this.player.y, { // Use this.random() for color selection
+                count: 1, // One particle per frame for continuous stream
+                color: ['#ffaa00', '#ff5500', '#ff0000'][Math.floor(this.random() * 3)], // Random orange/red
+                speed: { min: 20, max: 50 }, // Low speed
+                life: { min: 0.1, max: 0.3 }, // Short life
+                size: { min: 1, max: 3 },
+                baseAngle: thrusterAngle,
+                angleSpread: Math.PI / 6 // 30-degree cone
+            });
+        }
 
         this.player.x = Math.max(this.player.size, Math.min(this.canvas.width - this.player.size, this.player.x));
         this.player.y = Math.max(this.player.size, Math.min(this.canvas.height - this.player.size, this.player.y));
@@ -296,10 +483,44 @@ class SovereignEngine {
             }
         });
 
+        // Shield Regeneration
+        if (this.player.shieldRegenRate && this.player.shield < (this.player.maxShield || 50)) {
+            if (this.gameTime > (this.player.lastShieldDamageTime || 0) + this.player.shieldRegenDelay) {
+                this.player.shield += this.player.shieldRegenRate * dt;
+                if (this.player.shield > (this.player.maxShield || 50)) {
+                    this.player.shield = this.player.maxShield || 50;
+                }
+            }
+        }
+
         // Enemy AI
         this.enemies.forEach(enemy => {
-            // AI logic: 'chase' AI recalculates velocity towards player
-            if (enemy.ai_type === 'chase') {
+            if (enemy.isBoss) {
+                this.bossAIUpdate(enemy, dt, this); // Call the modded boss AI
+            } else if (enemy.ai_type === 'shooter') {
+                const dx = this.player.x - enemy.x;
+                const dy = this.player.y - enemy.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                // Try to stay at a distance
+                if (dist > 250) {
+                    enemy.vx = (dx/dist) * this.enemySpeed * 0.7;
+                    enemy.vy = (dy/dist) * this.enemySpeed * 0.7;
+                } else {
+                    enemy.vx *= 0.9; // Slow down when in range
+                    enemy.vy *= 0.9;
+                }
+                // Fire at the player
+                enemy.attackTimer = (enemy.attackTimer || 2) - dt;
+                if (enemy.attackTimer <= 0) {
+                    this.projectiles.push({
+                        from: 'enemy', x: enemy.x, y: enemy.y,
+                        vx: (dx/dist) * 250, vy: (dy/dist) * 250,
+                        size: 4, color: '#ff8800', life: 3, damage: 10
+                    });
+                    enemy.attackTimer = 2.5 + Math.random(); // Reset timer
+                    this.playShooterSound(); // This sound is not random, so no change
+                }
+            } else if (enemy.ai_type === 'chase') {
                 const dx = this.player.x - enemy.x;
                 const dy = this.player.y - enemy.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
@@ -311,6 +532,10 @@ class SovereignEngine {
             // Movement is applied to all enemies regardless of AI
             enemy.x += enemy.vx * dt;
             enemy.y += enemy.vy * dt;
+
+            // Keep all enemies within the canvas bounds
+            enemy.x = Math.max(enemy.size, Math.min(this.canvas.width - enemy.size, enemy.x));
+            enemy.y = Math.max(enemy.size, Math.min(this.canvas.height - enemy.size, enemy.y));
         });
         
         // Projectiles
@@ -318,12 +543,38 @@ class SovereignEngine {
             proj.x += proj.vx * dt;
             proj.y += proj.vy * dt;
             proj.life -= dt;
+
+            // Check for wall collision to create sparks
+            let hitWall = false;
+            let sparkAngle = 0;
+            if (proj.x <= proj.size) {
+                hitWall = true; sparkAngle = 0; // Sparks to the right
+            } else if (proj.x >= this.canvas.width - proj.size) {
+                hitWall = true; sparkAngle = Math.PI; // Sparks to the left
+            }
+            if (proj.y <= proj.size) {
+                hitWall = true; sparkAngle = Math.PI / 2; // Sparks down
+            } else if (proj.y >= this.canvas.height - proj.size) {
+                hitWall = true; sparkAngle = -Math.PI / 2; // Sparks up
+            }
+
+            if (hitWall) {
+                proj.life = 0; // Kill projectile
+                this.spawnParticles(proj.x, proj.y, {
+                    count: 3, color: '#ffcc00',
+                    speed: { min: 30, max: 100 }, life: { min: 0.2, max: 0.4 }, size: { min: 1, max: 2 }, // No random here
+                    baseAngle: sparkAngle, angleSpread: Math.PI / 2 // 90 degree spread
+                });
+            }
         });
         
         // Particles
         this.particles.forEach(p => {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
+            if (p.gravity) {
+                p.vy += p.gravity * dt;
+            }
             p.life -= dt;
             p.alpha = p.life / p.maxLife;
         });
@@ -341,31 +592,65 @@ class SovereignEngine {
     checkCollisions() {
         // Projectile-enemy
         this.projectiles.forEach(proj => {
-            this.enemies.forEach(enemy => {
-                const dx = proj.x - enemy.x;
-                const dy = proj.y - enemy.y;
-                if (Math.sqrt(dx*dx + dy*dy) < enemy.size + proj.size) {
-                    const damage = proj.damage * (this.player.damageMultiplier || 1);
-                    enemy.health -= damage;
-                    proj.life = 0;
-                    this.spawnParticles(enemy.x, enemy.y, '#ff6b00', 5);
-                    if (enemy.health <= 0) {
-                        if (enemy.isBoss) {
-                            this.score += enemy.scoreValue || 250;
-                        } else {
-                            this.score += 10;
+            if (proj.from === 'enemy') {
+                // Enemy projectile vs Player
+                const dx = this.player.x - proj.x;
+                const dy = this.player.y - proj.y;
+                if (Math.sqrt(dx*dx + dy*dy) < this.player.size + proj.size) {
+                    const damage = proj.damage || 10;
+                    if (this.player.shield && this.player.shield > 0) {
+                        this.player.shield -= damage;
+                        if (this.player.shieldRegenRate) { 
+                            this.player.lastShieldDamageTime = this.gameTime; 
                         }
-                        this.spawnParticles(enemy.x, enemy.y, '#ffff00', 10);
-                        // 10% chance to drop a power-up on kill
-                        if (Math.random() < 0.1) {
-							this.playExplosionSound();
-                            const types = Object.keys(powerUpTypes);
-                            const randomType = types[Math.floor(Math.random() * types.length)];
-                            this.spawnPowerUp(enemy.x, enemy.y, randomType);
+                        if (this.player.shield < 0) { this.player.health += this.player.shield; this.player.shield = 0; }
+                    } else {
+                        this.player.health -= damage;
+                    }
+                    this.playPlayerHitSound();
+                    this.spawnParticles(this.player.x, this.player.y, { 
+                        count: 5, 
+                        color: '#ffdddd',
+                        speed: {min: 50, max: 150}, 
+                        life: {min: 0.2, max: 0.4},
+                        size: {min: 1, max: 2}
+                    });
+                    proj.life = 0;
+                }
+            } else { // Player projectile
+                this.enemies.forEach(enemy => {
+                    const dx = proj.x - enemy.x;
+                    const dy = proj.y - enemy.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < enemy.size + proj.size) {
+                        const damage = proj.damage * (this.player.damageMultiplier || 1);
+                        enemy.health -= damage;
+                        proj.life = 0;
+                        if (proj.hitParticleOptions) {
+                            this.spawnParticles(enemy.x, enemy.y, proj.hitParticleOptions);
+                        } else {
+                            this.spawnParticles(enemy.x, enemy.y, { color: '#ff6b00', count: 5, speed: {min: 20, max: 80}, life: {min: 0.2, max: 0.5} });
+                        }
+                        if (enemy.health <= 0) {
+                            this.score += enemy.isBoss ? (enemy.scoreValue || 250) : 10;
+                            const explosionSize = Math.max(3, enemy.size);
+                            if (enemy.isBoss) {
+                                // Big boss explosion
+                                this.spawnParticles(enemy.x, enemy.y, { count: 200, color: '#ff8800', speed: {min: 50, max: 500}, life: {min: 0.8, max: 2.0} });
+                                this.spawnParticles(enemy.x, enemy.y, { count: 100, color: '#ffff00', speed: {min: 50, max: 400}, life: {min: 0.5, max: 1.5} });
+                            } else {
+                                // Standard enemy explosion scaled by size
+                                this.spawnParticles(enemy.x, enemy.y, { 
+                                    count: Math.floor(explosionSize * 2), 
+                                    color: '#ffff00',
+                                    speed: {min: 20, max: 20 + explosionSize * 15},
+                                    life: {min: 0.3, max: 0.3 + explosionSize * 0.05}
+                                });
+                            }
+                            if (this.random() < 0.1) { this.playExplosionSound(); this.spawnRandomPowerUp(enemy.x, enemy.y); }
                         }
                     }
-                }
-            });
+                });
+            }
         });
         
         // Player-enemy
@@ -375,6 +660,9 @@ class SovereignEngine {
             if (Math.sqrt(dx*dx + dy*dy) < this.player.size + enemy.size) {
                 if (this.player.shield && this.player.shield > 0) {
                     this.player.shield -= 20;
+                    if (this.player.shieldRegenRate) { 
+                        this.player.lastShieldDamageTime = this.gameTime; 
+                    }
                     if (this.player.shield < 0) {
                         this.player.health += this.player.shield;
                         this.player.shield = 0;
@@ -382,7 +670,14 @@ class SovereignEngine {
                 } else {
                     this.player.health -= 20;
                 }
-                this.spawnParticles(this.player.x, this.player.y, '#ff3333', 3);
+                this.playPlayerHitSound();
+                this.spawnParticles(this.player.x, this.player.y, { 
+                    count: 10, 
+                    color: '#ffdddd', 
+                    speed: {min: 50, max: 150}, 
+                    life: {min: 0.2, max: 0.4},
+                    size: {min: 1, max: 2}
+                });
                 enemy.health = 0;
                 // Game over and life-loss logic is now handled by the patch in sovereign-engine.html
             }
@@ -395,24 +690,34 @@ class SovereignEngine {
             const dy = player.y - powerUp.y;
             if (Math.sqrt(dx*dx + dy*dy) < player.size + powerUp.size) {
                 this.applyPowerUp(powerUp);
-				this.playPowerupSound();
-                this.spawnParticles(powerUp.x, powerUp.y, powerUp.color, 8);
+                this.playPowerupSound();
+                this.spawnParticles(powerUp.x, powerUp.y, { color: powerUp.color, count: 12, speed: {min: 20, max: 100} });
                 return false; // Remove powerUp
             }
             return true; // Keep powerUp
         });
     }
-    
-    spawnParticles(x, y, color, count = 5) {
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 50 + Math.random() * 100;
-            this.particles.push({
-                x, y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                color, life: 0.5, maxLife: 0.5, alpha: 1, size: 2
-            });
+
+    spawnParticles(x, y, options = {}) {
+        const defaults = {
+            count: 10,
+            color: '#ffffff',
+            speed: { min: 50, max: 150 },
+            life: { min: 0.3, max: 0.8 },
+            size: { min: 1, max: 3 },
+            gravity: 0, // vertical acceleration
+            baseAngle: 0,
+            angleSpread: Math.PI * 2,
+        };
+        const config = { ...defaults, ...options };
+
+        for (let i = 0; i < config.count; i++) {
+            const angle = config.baseAngle + (this.random() - 0.5) * config.angleSpread;
+            const speed = config.speed.min + this.random() * (config.speed.max - config.speed.min);
+            const life = config.life.min + this.random() * (config.life.max - config.life.min);
+            const size = config.size.min + this.random() * (config.size.max - config.size.min);
+
+            this.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, color: config.color, life: life, maxLife: life, alpha: 1, size: size, gravity: config.gravity });
         }
     }
     
@@ -544,13 +849,40 @@ class SovereignEngine {
         }
         this.ctx.shadowBlur = 0;
         
+        // Boss Health Bar
+        const boss = this.enemies.find(e => e.isBoss);
+        if (boss) {
+            const barWidth = this.canvas.width * 0.6;
+            const barHeight = 20;
+            const xPos = (this.canvas.width - barWidth) / 2;
+            const yPos = 20;
+            const healthPercent = Math.max(0, boss.health / (boss.maxHealth || 1));
+
+            // Bar background
+            this.ctx.fillStyle = 'rgba(50, 0, 0, 0.7)';
+            this.ctx.fillRect(xPos, yPos, barWidth, barHeight);
+
+            // Bar foreground
+            this.ctx.fillStyle = '#ff0033';
+            this.ctx.fillRect(xPos, yPos, barWidth * healthPercent, barHeight);
+
+            // Border and Text
+            this.ctx.strokeStyle = '#ff8888';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(xPos, yPos, barWidth, barHeight);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 14px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('B O S S', this.canvas.width / 2, yPos + 15);
+        }
+
         // Health & Shield bar UI
         const barWidth = 150;
         const barHeight = 10;
         const healthPercent = Math.max(0, this.player.health / (this.player.maxHealth || 100));
-        const shieldPercent = Math.max(0, this.player.shield / 50); // Assuming shield max is 50
+        const shieldPercent = Math.max(0, this.player.shield / (this.player.maxShield || 50));
         const xPos = this.canvas.width - barWidth - 20;
-        const yPos = 20;
+        const yPos = 50;
         
         // Health Bar
         this.ctx.fillStyle = '#333';

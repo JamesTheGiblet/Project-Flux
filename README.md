@@ -126,6 +126,19 @@ The Sovereign Engine is designed for maximum freedom in distribution:
 
 The Sovereign Engine is more than just a game; it's a proof of concept for sovereign software. Every click in the mod panel is someone exercising digital sovereignty. Every line of code edited is someone refusing to accept software as a black box. The engine teaches by invitation: "Here's how weapons work. Here's how to change them. What will you build?"
 
+## ✨ Additional Features & Enhancements
+
+Beyond the core modding capabilities, the Sovereign Engine has evolved with several key features to enhance gameplay and user experience:
+
+- **Life System & Game Over:** Players now have a limited number of lives, with a clear game-over state and high score tracking.
+- **Hackable Life Rules:** A dedicated "LIFE MOD" panel allows you to define custom rules for gaining extra lives (e.g., based on score, time, or specific events).
+- **Power-Up System:** Collectible power-ups (Shield, Speed Boost, Quad Damage, Health Pack, Nuke) drop from defeated enemies, offering temporary advantages or instant effects.
+- **Pixel Art & Rotation:** All entities (player, enemies, bosses) are rendered with retro pixel art sprites that dynamically rotate to face their direction of movement.
+- **Procedural Sound Effects:** Enjoy satisfying synth sounds for shooting, explosions, and power-up collection, all generated on-the-fly without external audio files.
+- **Pause Functionality:** Press 'P' to pause and resume the game at any time.
+- **Collapsible Mod Panel:** The modding UI can now be collapsed to maximize game screen space, with its state remembered across sessions.
+- **Advanced Boss AI:** Bosses no longer just chase; they employ distinct attack patterns including spiral shots, targeted bursts, and telegraphed charges, making each encounter a unique challenge.
+
 Want to add multiplayer? Mod the network layer. Want different graphics? Mod the renderer. Want blockchain integration? Mod the state system. The architecture doesn't care what you build—it just gives you the tools and gets out of your way. This is how all software should be built: transparent, modifiable, and yours.
 
 🤝 Contributing

@@ -14,14 +14,21 @@ const weaponPresets = {
   for (let i = 0; i < 6; i++) {
     const dx = target.x - player.x;
     const dy = target.y - player.y;
-    const angle = Math.atan2(dy, dx);
-    const spread = (Math.random() - 0.5) * 0.4; // ~23 degrees spread
-    const speed = 280 + Math.random() * 80;
+    const angle = Math.atan2(dy, dx); // Not random
+    const spread = (engine.random() - 0.5) * 0.4; // ~23 degrees spread
+    const speed = 280 + engine.random() * 80;
     engine.projectiles.push({
       x: player.x, y: player.y,
       vx: Math.cos(angle + spread) * speed,
       vy: Math.sin(angle + spread) * speed,
-      size: 2, color: '#ffaa00', life: 0.6, damage: 10
+      size: 2, color: '#ffaa00', life: 0.6, damage: 10,
+      hitParticleOptions: {
+          count: 2,
+          color: '#ffaa00',
+          speed: {min: 10, max: 40},
+          life: {min: 0.1, max: 0.3},
+          size: {min: 1, max: 2}
+      }
     });
   }
 }`,
@@ -32,7 +39,7 @@ const weaponPresets = {
   const dy = target.y - player.y;
   const dist = Math.sqrt(dx*dx + dy*dy) || 1;
   const angle = Math.atan2(dy, dx);
-  const spread = (Math.random() - 0.5) * 0.08;
+  const spread = (engine.random() - 0.5) * 0.08;
   engine.projectiles.push({
     x: player.x, y: player.y,
     vx: Math.cos(angle + spread) * 600,
@@ -63,7 +70,7 @@ const weaponPresets = {
 
   for (let i = 0; i < 3; i++) {
     setTimeout(() => {
-      const spread = (Math.random() - 0.5) * 0.1;
+      const spread = (engine.random() - 0.5) * 0.1;
       engine.projectiles.push({
         x: player.x, y: player.y,
         vx: Math.cos(angle + spread) * speed,

@@ -380,6 +380,27 @@ player.color = '#ffff00';</code></pre>
             </div>
 
             <div class="mod-section">
+                <h3>🌱 SEED</h3>
+                <input type="number" class="code-editor" id="seedCode" placeholder="Enter a number for the game seed..." value="12345">
+                <button class="apply-btn" onclick="applyMod('seed')">Apply Seed</button>
+                <div class="save-preset-area">
+                    <input type="text" class="preset-name-input" id="seedPresetName" placeholder="Save as new preset...">
+                    <button class="save-btn" onclick="savePreset('seed')">💾 Save</button>
+                </div>
+            </div>
+
+            <div class="mod-section">
+                <h3>👾 BOSS AI MOD</h3>
+                <select id="bossAISelector" title="Select boss AI preset" onchange="selectPreset('bossAI', this.value)"></select>
+                <textarea class="code-editor" id="bossAICode" placeholder="Write or modify boss AI here..."></textarea>
+                <button class="apply-btn" onclick="applyMod('bossAI')">Apply Boss AI</button>
+                <div class="save-preset-area">
+                    <input type="text" class="preset-name-input" id="bossAIPresetName" placeholder="Save as new preset...">
+                    <button class="save-btn" onclick="savePreset('bossAI')">💾 Save</button>
+                </div>
+            </div>
+
+            <div class="mod-section">
                 <h3>💻 HACK THE SYSTEM</h3>
                 <textarea class="code-editor" id="hackCode" placeholder="/* DANGER ZONE */
 // Code here has direct access to the 'game' object.
@@ -396,6 +417,7 @@ player.color = '#ffff00';</code></pre>
     <script src="mods/rules/rules.js"></script>
     <script src="mods/player/player.js"></script>
     <script src="mods/health/life.js"></script>
+    <script src="mods/enemies/boss-ai.js"></script>
     <script src="mods/power-ups/power-ups.js"></script>
     <script>
         // --- MOD SYSTEM ---
@@ -456,6 +478,16 @@ player.color = '#ffff00';</code></pre>
                     case 'life':
                         game.lifeRuleUpdate = modFunc;
                         break;
+                    case 'seed':
+                        const seedValue = parseInt(code);
+                        if (isNaN(seedValue)) {
+                            throw new Error("Seed must be a number.");
+                        }
+                        game.setSeed(seedValue);
+                        break;
+                    case 'bossAI':
+                        game.bossAIUpdate = modFunc;
+                        break;
                 }
                 console.log(`${modType.charAt(0).toUpperCase() + modType.slice(1)} mod applied!`);
             } catch (e) {
@@ -466,7 +498,12 @@ player.color = '#ffff00';</code></pre>
         function savePreset(modType) {
             const nameInput = document.getElementById(`${modType}PresetName`);
             const presetName = nameInput.value.trim();
-            const code = document.getElementById(`${modType}Code`).value;
+            let code;
+            if (modType === 'seed') {
+                code = document.getElementById(`${modType}Code`).value; // Get value from input
+            } else {
+                code = document.getElementById(`${modType}Code`).value; // Get value from textarea
+            }
 
             if (!presetName) {
                 alert('Please enter a name for your preset.');
@@ -503,10 +540,13 @@ player.color = '#ffff00';</code></pre>
         }
 
         function initializeModSystem() {
-            game.allPresets = { weapon: {}, rule: {}, player: {}, life: {} };
-            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, life: lifePresets };
+            game.allPresets = { weapon: {}, rule: {}, player: {}, life: {}, bossAI: {}, seed: {} };
+            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, life: lifePresets, bossAI: bossAIPresets, seed: { default: '12345' } };
 
             for (const modType in game.allPresets) {
+                // Seed mod doesn't have a selector dropdown
+                if (modType === 'seed') continue;
+
                 const customMods = JSON.parse(localStorage.getItem(`sovereign_${modType}_mods`)) || {};
                 game.allPresets[modType] = { ...defaultPresets[modType], ...customMods };
 
@@ -521,8 +561,17 @@ player.color = '#ffff00';</code></pre>
                     selector.appendChild(option);
                 }
             }
-        }
-        
+            // Handle seed preset loading separately as it uses an input, not a select
+            const seedCustomMods = JSON.parse(localStorage.getItem(`sovereign_seed_mods`)) || {};
+            game.allPresets.seed = { ...defaultPresets.seed, ...seedCustomMods };
+            
+            function selectPreset(modType, presetName) {
+                const element = document.getElementById(`${modType}Code`);
+                const presets = game.allPresets[modType];
+                if (presets && presets[presetName]) { element.value = presets[presetName]; }
+            }
+        } // <-- Add this closing brace to end initializeModSystem
+
         let game;
         window.onload = function() {
             game = new SovereignEngine();
@@ -541,6 +590,7 @@ player.color = '#ffff00';</code></pre>
 			game.wave = 1;
 			game.wavesPerLevel = 3;
 			game.gameState = 'WAVE'; // WAVE, BOSS, INTERMISSION
+			game.wasBossPresent = false;
 			game.waveEnemiesSpawned = 0;
 			game.waveEnemiesTotal = 0;
 
@@ -558,7 +608,11 @@ player.color = '#ffff00';</code></pre>
 				this.wave = 1;
 				this.gameState = 'WAVE';
 				this.waveEnemiesSpawned = 0;
+				this.wasBossPresent = false;
 				this.waveEnemiesTotal = 0;
+				// Re-apply default seed
+				selectPreset('seed', 'default');
+				applyMod('seed');
 				this.initializeAudio(); // Re-initialize audio for the new game
 				pauseOverlay.innerHTML = 'PAUSED'; // Reset for pause functionality
 				pauseOverlay.style.display = 'none';
@@ -665,9 +719,12 @@ player.color = '#ffff00';</code></pre>
             selectPreset('rule', 'level-progression');
             selectPreset('player', 'default');
             selectPreset('life', 'points-based');
+            selectPreset('seed', 'default'); // Load default seed into input
+            selectPreset('bossAI', 'default');
             applyMod('life');
             applyMod('rule');
             applyMod('player');
+            applyMod('bossAI');
 
             console.log(`
 🚀 SOVEREIGN ENGINE LOADED
@@ -679,5 +736,7 @@ Every system is hackable!
 `);
         };
     </script>
+
 </body>
 </html>
+
