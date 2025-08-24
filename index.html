@@ -18,6 +18,10 @@
 		color: #00ff88;
 		overflow: hidden;
 		height: 100vh;
+		-webkit-user-select: none; /* Safari */
+		-moz-user-select: none;    /* Firefox */
+		-ms-user-select: none;     /* IE10+/Edge */
+		user-select: none;         /* Standard */
 	}
 	.container { display: flex; height: 100vh; }
 	.game-area {
@@ -692,7 +696,7 @@ player.color = '#ffff00';</code></pre>
     <script src="mods/weapons/weapons.js"></script>
     <script src="mods/rules/rules.js"></script>
     <script src="mods/player/player.js"></script>
-    <script src="mods/controls/controls.js"></script>
+    <script src="controls/controls.js"></script>
     <script src="mods/health/life.js"></script>
     <script src="mods/enemies/boss-ai.js"></script>
     <script src="mods/power-ups/power-ups.js"></script>
@@ -763,7 +767,7 @@ player.color = '#ffff00';</code></pre>
         } catch (e) {
 			console.error(`Error in ${modType} code: ${e.message}`);
 		}
-		} // <-- Add this closing brace to end applyMod function
+        }
 
         function savePreset(modType) {
             const nameInput = document.getElementById(`${modType}PresetName`);
@@ -1227,15 +1231,48 @@ Every system is hackable!
 `);
         };
 
-        // --- PWA SERVICE WORKER REGISTRATION ---
+        // --- PWA SERVICE WORKER REGISTRATION & UPDATE HANDLING ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                 .then(registration => {
                     console.log('Service Worker registered! Scope:', registration.scope);
+
+                    // This event fires when a new service worker is found and is installing.
+                    registration.onupdatefound = () => {
+                        const newWorker = registration.installing;
+                        console.log('New service worker found, installing.');
+
+                        newWorker.onstatechange = () => {
+                            // The new service worker has been installed and is waiting to activate.
+                            // This is the perfect time to prompt the user to refresh.
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('New service worker installed and ready to activate.');
+                                const updateNotification = document.getElementById('updateNotification');
+                                const reloadButton = document.getElementById('reloadButton');
+
+                                if (updateNotification && reloadButton) {
+                                    updateNotification.style.display = 'block';
+                                    reloadButton.onclick = () => {
+                                        // Tell the new worker to skip waiting and take control immediately.
+                                        newWorker.postMessage({ action: 'skipWaiting' });
+                                    };
+                                }
+                            }
+                        };
+                    };
                 })
                 .catch(err => {
                     console.error('Service Worker registration failed:', err);
+                });
+
+                // This event fires when the new service worker has taken control.
+                // We can safely reload the page now to get the new content.
+                let refreshing;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    window.location.reload();
+                    refreshing = true;
                 });
             });
         }
