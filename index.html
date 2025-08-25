@@ -1025,6 +1025,7 @@ player.color = '#ffff00';</code></pre>
 				this.waveEnemiesSpawned = 0;
 				this.wasBossPresent = false;
 				this.waveEnemiesTotal = 0;
+				this.initializeAudio(); // Ensure AudioContext is ready before playing sounds.
 				this.stopBackgroundMusic(); // Stop any previous music
 				this.playBackgroundMusic(); // Start the soundtrack
 				this.comboCount = 0;
@@ -1032,7 +1033,6 @@ player.color = '#ffff00';</code></pre>
 				// Re-apply default seed
 				selectPreset('seed', 'default');
 				applyMod('seed');
-				this.initializeAudio(); // Re-initialize audio for the new game
 				pauseOverlay.innerHTML = 'PAUSED'; // Reset for pause functionality
 				pauseOverlay.style.display = 'none';
 				applyMod('rule'); // Re-apply rules to restart spawners

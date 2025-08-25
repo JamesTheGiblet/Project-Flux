@@ -117,6 +117,11 @@ class SovereignEngine {
     playBackgroundMusic() {
         if (!this.audioContext || this.audioContext.state === 'closed' || this.musicScheduler) return;
 
+        // If context is suspended, try to resume it. This can happen on some browsers.
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
         // Master gain node for music to control volume and allow fading out.
         this.musicGainNode = this.audioContext.createGain();
         this.musicGainNode.gain.setValueAtTime(0.12, this.audioContext.currentTime); // Set music volume
