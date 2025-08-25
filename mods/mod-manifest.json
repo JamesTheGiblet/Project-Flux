@@ -1,13 +1,14 @@
 {
     "weapon": {
-        "Pistol (Default)": "mods/weapons/default-pistol.js",
-        "Shotgun": "mods/weapons/shotgun.js"
+        "Pistol (Default)": "mods/weapons/pistol.js",
+        "Shotgun": "mods/weapons/shotgun.js",
+        "Scatter-gun": "mods/weapons/scatter-gun.js"
     },
     "rule": {
         "Level Progression (Default)": "mods/rules/level-progression.js",
-        "Endless Spawner": "mods/rules/default-spawner.js",
-        "Horde Mode": "mods/rules/horde-mode.js"
-    },
+        "Endless Mode": "mods/rules/endless.js",
+        "Hardcore Spawner": "mods/rules/hardcore-spawner.js"
+  },
     "player": {
         "Standard (Default)": "mods/player/default-player.js",
         "Glass Cannon": "mods/player/glass-cannon.js"

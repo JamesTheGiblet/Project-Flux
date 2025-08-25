@@ -142,6 +142,89 @@ function update(engine, dt) {
   }
 }
 
+### Creating Advanced Enemy AI
+
+The default engine handles basic AI like `'chase'`. However, you can define entirely new, complex AI behaviors directly within a **Rules Mod**. Because the `update` function in the Rules Mod runs every frame, it can directly manipulate the properties of any enemy on the fly.
+
+This allows you to create sophisticated behaviors like:
+
+- **Interceptors:** Enemies that predict the player's movement.
+- **Shooters:** Enemies that keep their distance and fire their own projectiles.
+- **Support Units:** Enemies that heal or shield other enemies.
+
+The engine comes with a "Hardcore Spawner" preset that demonstrates this. You can select it from the `🎮 RULES MOD` dropdown to experience a much more challenging game with varied enemy types. Below is the code for that preset, showing how it works.
+
+```javascript
+// "Hardcore Spawner" Rules Mod
+// This mod introduces new AI types and spawns a challenging mix of enemies.
+function update(engine, dt) {
+  // --- 1. Custom AI Logic Processing ---
+  // We loop through enemies each frame to apply our custom AI.
+  engine.enemies.forEach(enemy => {
+    if (!enemy.ai_state) enemy.ai_state = {}; // Init state storage
+    const player = engine.player;
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // 'interceptor' AI: Aims ahead of the player.
+    if (enemy.ai_type === 'interceptor') {
+      const leadTime = dist / (enemy.speed * 0.9); // How far to lead
+      const targetX = player.x + (player.vx || 0) * leadTime;
+      const targetY = player.y + (player.vy || 0) * leadTime;
+      const tdx = targetX - enemy.x, tdy = targetY - enemy.y;
+      const tdist = Math.sqrt(tdx*tdx + tdy*tdy);
+      if (tdist > 1) {
+        enemy.vx = (tdx / tdist) * enemy.speed;
+        enemy.vy = (tdy / tdist) * enemy.speed;
+      }
+    }
+
+    // 'shooter' AI: Complements a base movement AI (like 'chase') by adding shooting.
+    if (enemy.ai_type === 'shooter') {
+      enemy.ai_state.shootCooldown = (enemy.ai_state.shootCooldown || 1) - dt;
+      if (enemy.ai_state.shootCooldown <= 0) {
+        enemy.ai_state.shootCooldown = 2.5 + engine.random(); // Cooldown
+        const angle = Math.atan2(dy, dx);
+        engine.projectiles.push({
+          x: enemy.x, y: enemy.y,
+          vx: Math.cos(angle) * 300, vy: Math.sin(angle) * 300,
+          size: 4, color: '#ff8800', life: 2.5, damage: 10,
+          isEnemyProjectile: true // IMPORTANT: Flag for collision system
+        });
+      }
+    }
+  });
+
+  // --- 2. Spawner Logic (Modified from 'level-progression') ---
+  if (engine.gameState === 'WAVE') {
+    if (engine.waveEnemiesSpawned < engine.waveEnemiesTotal && engine.random() < 0.12) {
+      const rand = engine.random();
+      let enemyConfig = {};
+
+      if (rand < 0.5) { // 50% chance for a fast, weak chaser
+        enemyConfig = { health: 20, size: 6 + engine.random() * 4, speed: 90 + engine.random() * 40, ai_type: 'chase', color: '#ff4444' };
+      } else if (rand < 0.8) { // 30% chance for a predictive interceptor
+        enemyConfig = { health: 40, size: 8, speed: 110, ai_type: 'interceptor', color: '#ffff66' };
+      } else { // 20% chance for a durable shooter
+        enemyConfig = { health: 50, size: 10, speed: 60, ai_type: 'shooter', color: '#ff8800' };
+      }
+      
+      enemyConfig.health += engine.level * 10; // Scale with level
+      engine.spawnEnemy(enemyConfig);
+      engine.waveEnemiesSpawned++;
+    }
+
+    // Wave clearing and state transition logic...
+    if (engine.waveEnemiesSpawned >= engine.waveEnemiesTotal && engine.enemies.length === 0) { /* ... */ }
+  } else if (engine.gameState === 'BOSS') {
+    // (Boss logic can remain the same)
+  } else if (engine.gameState === 'INTERMISSION') {
+    // (Intermission logic can remain the same)
+  }
+}
+```
+
 ## ✨ MVP Core Features
 
 This MVP is not just a tech demo. It's a fully functional proof of concept showcasing the core value of "sovereign software."
@@ -149,7 +232,7 @@ This MVP is not just a tech demo. It's a fully functional proof of concept showc
 - **Complete Game Loop:** This MVP features a full gameplay experience with a **Life & Game Over System**, high score tracking, and a level progression system that takes you from wave-based combat to challenging boss fights.
 - **Dynamic Power-Up System:** Defeat enemies to collect a variety of game-changing power-ups, including shields, speed boosts, and the screen-clearing "Nuke." Each power-up provides a temporary but significant advantage, adding a layer of strategy to the gameplay.
 - **Advanced & Hackable Boss AI:** Face off against bosses that utilize multiple, distinct attack patterns. The boss AI is not hard-coded; it's another moddable system, allowing you to design your own epic encounters.
-- **Live In-Browser Modding:** The core value proposition in action. Modify weapons, game rules, player stats, and more directly in your browser with instant feedback. No build step required.
+- **Live In-Browser Modding:** The core value proposition in action. Modify weapons, player stats, and even core game logic like enemy AI and level progression directly in your browser with instant feedback. No build step required.
 - **Ready-to-Hack Presets:** Jumpstart your creativity with a collection of pre-built mods. Instantly switch from a pistol to a shotgun, or from an endless mode to a level-based campaign, and see the code that makes it happen.
 - **Procedurally Generated Audio & Visuals:** All sound effects are generated on-the-fly, creating a unique and responsive audio landscape. Combined with dynamic particle effects and sprite rotation, the engine feels alive.
 - **Deterministic Gameplay:** Utilize the "Seed" system to generate predictable, replayable runs—perfect for speedrunning, competitions, or simply mastering a specific challenge.

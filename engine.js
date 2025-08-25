@@ -638,9 +638,10 @@ class SovereignEngine {
                 enemy.attackTimer = (enemy.attackTimer || 2) - dt;
                 if (enemy.attackTimer <= 0) {
                     this.projectiles.push({
-                        from: 'enemy', x: enemy.x, y: enemy.y,
+                        x: enemy.x, y: enemy.y,
                         vx: (dx/dist) * 250, vy: (dy/dist) * 250,
-                        size: 4, color: '#ff8800', life: 3, damage: 10
+                        size: 4, color: '#ff8800', life: 3, damage: 10,
+                        isEnemyProjectile: true // Standardized flag for enemy shots
                     });
                     enemy.attackTimer = 2.5 + this.random(); // Reset timer
                     this.playShooterSound(); // This sound is not random, so no change
@@ -717,7 +718,7 @@ class SovereignEngine {
     checkCollisions() {
         // Projectile-enemy
         this.projectiles.forEach(proj => {
-            if (proj.from === 'enemy') {
+            if (proj.isEnemyProjectile) {
                 // Enemy projectile vs Player
                 const dx = this.player.x - proj.x;
                 const dy = this.player.y - proj.y;

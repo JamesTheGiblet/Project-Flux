@@ -6,6 +6,7 @@ const urlsToCache = [
   'engine.js',
   'mods/weapons/weapons.js',
   'controls/controls.js',
+  'mods/rules/hardcore-spawner.js',
   'mods/rules/rules.js',
   'mods/player/player.js',
   'mods/health/life.js',
