@@ -18,7 +18,7 @@ class SovereignEngine {
         this.lastShotTime = 0;
         this.keys = {};
         this.mousePos = { x: 0, y: 0 };
-        this.initializeAudio();
+        this.audioContext = null; // Initialized on first user interaction to comply with browser policies.
 
 		// --- GAME STATE ---
 
@@ -95,15 +95,20 @@ class SovereignEngine {
     }
 
     initializeAudio() {
-        try {
-            // Ensure any existing context is closed before creating a new one.
-            if (this.audioContext && this.audioContext.state !== 'closed') {
-                this.audioContext.close();
+        // This function should be called after a user gesture (e.g., clicking a "start" button).
+        if (!this.audioContext || this.audioContext.state === 'closed') {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log("AudioContext initialized successfully on user gesture.");
+            } catch (e) {
+                console.warn("Web Audio API is not supported in this browser. Audio disabled.");
+                this.audioContext = null;
             }
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.warn("Web Audio API is not supported in this browser. Audio disabled.");
-            this.audioContext = null; // Disable audio
+        } else if (this.audioContext.state === 'suspended') {
+            // If the context was created but is suspended, it needs to be resumed.
+            this.audioContext.resume().then(() => {
+                console.log("AudioContext resumed successfully.");
+            });
         }
     }
     
