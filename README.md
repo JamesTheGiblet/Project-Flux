@@ -1,6 +1,8 @@
-# 🚀 SOVEREIGN ENGINE: Flux
+# 🚀 SOVEREIGN ENGINE: Flux (MVP Release)
 
 Hackable. Modular. Yours. Every line of code is an invitation.
+
+> **This is the Minimum Viable Product (MVP) release of the Sovereign Engine.** It's a fully functional, playable, and hackable proof of concept demonstrating our vision for "sovereign software." We invite you to dive in, break things, and see the potential for yourself.
 
 Welcome to Sovereign Engine, a game framework designed from the ground up to empower creators with total control. This isn't an engine; it's a living manifesto for digital sovereignty, challenging the notion of software as a black box. Here, every pixel is hackable, every rule is rewritable, and every system is explicitly yours to command. Dive in, modify, and reclaim your digital creative freedom.
 
@@ -8,7 +10,7 @@ Welcome to Sovereign Engine, a game framework designed from the ground up to emp
 
 We believe software should be transparent, modifiable, and truly owned by its users. The Sovereign Engine is a testament to this belief. It's about refusing to accept limitations and embracing the power to reshape your digital experience. No permissions, no gatekeepers, just pure creative freedom.
 
-✨ Core Principles
+## ✨ Core Principles
 
 The Sovereign Engine is built on a philosophy of ultimate flexibility and immediate feedback:
 
@@ -22,17 +24,7 @@ The Sovereign Engine is built on a philosophy of ultimate flexibility and immedi
 
     No Limits: If you can code it in JavaScript, you can mod it. The engine's design explicitly exposes its internal workings, providing you with the tools to implement anything from custom particle effects and AI behaviors to entirely new game mechanics and procedural generation systems.
 
-🛠️ Ready-to-Hack Presets
-
-To demonstrate the power of the Sovereign Engine, it ships with working example mods that showcase its core philosophy in action:
-
-    Pistol → Shotgun: Instantly switch from a single-shot pistol to a multi-projectile shotgun. The code for both is available in the editor, showing how different firing logic can be implemented.
-
-    Default Player → Custom Build: Modify the player's core stats like speed, size, and color on the fly. Create a fast, fragile glass cannon or a slow, durable tank by editing the player mod.
-
-    Endless Mode → Level Progression: See how entire game modes can be re-defined. Switch from a simple endless spawner to a complete game loop with waves, bosses, and difficulty scaling, all controlled by the Rules Mod.
-
-🚀 Get Started (Self-Hosting)
+## 🚀 Get Started (Self-Hosting)
 
 Getting the Sovereign Engine up and running is as straightforward as possible:
 
@@ -58,7 +50,7 @@ Bash
 
         Open your web browser and navigate to http://localhost:8000. You should see the Sovereign Engine running, ready for your modifications!
 
-💡 How to Mod
+## 💡 How to Mod
 
 The engine is designed for live modification directly in the browser. The "How to Hack" panel in the UI provides a quick reference, but here's the core workflow:
 
@@ -72,7 +64,7 @@ The engine is designed for live modification directly in the browser. The "How t
 
     Save Your Creation: If you create something you love, give it a name in the input field at the bottom of the section and click "💾 Save". It will be saved to your browser's localStorage and will appear in the dropdown menu next time you load the game.
 
-🔫 Weapon Mod Example
+### 🔫 Weapon Mod Example
 
 The weapon mod is a function with the signature function shoot(player, target, engine). To create a new projectile, you add an object to the engine.projectiles array.
 
@@ -97,7 +89,7 @@ function shoot(player, target, engine) {
   }
 }
 
-🎮 Rules Mod Example
+### 🎮 Rules Mod Example
 
 The rules mod is a function that runs every frame: `function update(engine, dt)`. You can use it to control enemy spawning, difficulty, or any other global game logic.
 
@@ -150,39 +142,41 @@ function update(engine, dt) {
   }
 }
 
-🌐 Distribution & Sharing
+## ✨ MVP Core Features
 
-The Sovereign Engine is designed for maximum freedom in distribution:
+This MVP is not just a tech demo. It's a fully functional proof of concept showcasing the core value of "sovereign software."
 
-    Self-Hosting: As shown above, a simple git clone and python -m http.server is all you need to host your version of the engine.
+- **Complete Game Loop:** This MVP features a full gameplay experience with a **Life & Game Over System**, high score tracking, and a level progression system that takes you from wave-based combat to challenging boss fights.
+- **Dynamic Power-Up System:** Defeat enemies to collect a variety of game-changing power-ups, including shields, speed boosts, and the screen-clearing "Nuke." Each power-up provides a temporary but significant advantage, adding a layer of strategy to the gameplay.
+- **Advanced & Hackable Boss AI:** Face off against bosses that utilize multiple, distinct attack patterns. The boss AI is not hard-coded; it's another moddable system, allowing you to design your own epic encounters.
+- **Live In-Browser Modding:** The core value proposition in action. Modify weapons, game rules, player stats, and more directly in your browser with instant feedback. No build step required.
+- **Ready-to-Hack Presets:** Jumpstart your creativity with a collection of pre-built mods. Instantly switch from a pistol to a shotgun, or from an endless mode to a level-based campaign, and see the code that makes it happen.
+- **Procedurally Generated Audio & Visuals:** All sound effects are generated on-the-fly, creating a unique and responsive audio landscape. Combined with dynamic particle effects and sprite rotation, the engine feels alive.
+- **Deterministic Gameplay:** Utilize the "Seed" system to generate predictable, replayable runs—perfect for speedrunning, competitions, or simply mastering a specific challenge.
 
-    IPFS Distribution: For truly uncensorable, distributed hosting, you can add your sovereign-engine/ directory to IPFS. This makes your version of the game persistently available on the decentralized web: ipfs add -r sovereign-engine/.
-
-    GitHub Pages: Push your repository to GitHub, and you can instantly host your game globally using GitHub Pages. Just enable it in your repository settings, and your game will be live at https://YOUR_GITHUB_USERNAME.github.io/sovereign-engine/.
-
-🔮 The Vision Realized
+## 🔮 The Vision Realized
 
 The Sovereign Engine is more than just a game; it's a proof of concept for sovereign software. Every click in the mod panel is someone exercising digital sovereignty. Every line of code edited is someone refusing to accept software as a black box. The engine teaches by invitation: "Here's how weapons work. Here's how to change them. What will you build?"
 
-## ✨ Additional Features & Enhancements
-
-Beyond the core modding capabilities, the Sovereign Engine has evolved with several key features to enhance gameplay and user experience:
-
-- **Life System & Game Over:** Players now have a limited number of lives, with a clear game-over state and high score tracking.
-- **Hackable Life Rules:** A dedicated "LIFE MOD" panel allows you to define custom rules for gaining extra lives (e.g., based on score, time, or specific events).
-- **Power-Up System:** Collectible power-ups (Shield, Speed Boost, Quad Damage, Health Pack, Nuke, Regenerating Shield) drop from defeated enemies, offering temporary advantages or instant effects.
-- **Pixel Art & Rotation:** All entities (player, enemies, bosses) are rendered with retro pixel art sprites that dynamically rotate to face their direction of movement.
-- **Procedural Sound Effects:** Enjoy satisfying synth sounds for shooting, explosions, and power-up collection, all generated on-the-fly without external audio files. Includes sounds for player hit, boss phase transitions, wave clear, and level complete.
-- **Pause Functionality:** Press 'P' to pause and resume the game at any time.
-- **Collapsible Mod Panel:** The modding UI can now be collapsed to maximize game screen space, with its state remembered across sessions.
-- **Advanced Boss AI:** Bosses no longer just chase; they employ distinct attack patterns including spiral shots, targeted bursts, and telegraphed charges, making each encounter a unique challenge.
-- **Seeded Randomness:** Game sessions are now deterministic based on a numerical seed, allowing for predictable and replayable runs.
-- **Enhanced Particle Effects:** More varied particle effects for player hits, enemy explosions (scaled by size), and projectile impacts (e.g., shotgun pellet splats).
-- **Power-up Timer Display:** Active power-ups now show a visual countdown bar and tooltip for their remaining duration.
-
 Want to add multiplayer? Mod the network layer. Want different graphics? Mod the renderer. Want blockchain integration? Mod the state system. The architecture doesn't care what you build—it just gives you the tools and gets out of your way. This is how all software should be built: transparent, modifiable, and yours.
 
-🤝 Contributing
+## 🌐 Distribution & Sharing
+
+The Sovereign Engine is designed for maximum freedom in distribution:
+
+- **Self-Hosting:** As shown above, a simple `git clone` and `python -m http.server` is all you need to host your version of the engine.
+- **IPFS Distribution:** For truly uncensorable, distributed hosting, you can add your `sovereign-engine/` directory to IPFS. This makes your version of the game persistently available on the decentralized web: `ipfs add -r sovereign-engine/`.
+- **GitHub Pages:** Push your repository to GitHub, and you can instantly host your game globally using GitHub Pages. Just enable it in your repository settings, and your game will be live at `https://YOUR_GITHUB_USERNAME.github.io/sovereign-engine/`.
+
+## 📚 Documentation & Future Roadmap
+
+This MVP is just the beginning. We are building a comprehensive suite of documentation, advanced tutorials, and exclusive mods to unlock the full potential of the Sovereign Engine.
+
+The complete documentation and our detailed future roadmap are available for purchase. Your support will directly fund the development of new features and help us continue our mission to build truly sovereign software.
+
+👉 **Get the Full Documentation & Roadmap on our Website**
+
+## 🤝 Contributing
 
 We welcome contributions from anyone who believes in the vision of sovereign software!
 
@@ -194,10 +188,10 @@ We welcome contributions from anyone who believes in the vision of sovereign sof
 
     Improve the engine: Found a bug? Have an idea for a core engine improvement? Open an issue or submit a pull request!
 
-📄 License
+## 📄 License
 
 This project is released under the MIT License. For full details, see the LICENSE file in this repository.
 
-📧 Contact
+## 📧 Contact
 
 Have questions or want to connect? Reach out on [Your preferred community channel, e.g., Discord/Twitter/Email].
