@@ -201,13 +201,49 @@ if (engine.gameTime > (engine.lastBossTime || 0) + 15) {
         <p>The Sovereign Engine is more than just a game; it's a proof of concept for sovereign software. Every click in the mod panel is someone exercising digital sovereignty. Every line of code edited is someone refusing to accept software as a black box. The engine teaches by invitation: "Here's how weapons work. Here's how to change them. What will you build?"</p>
         <p>Want to add multiplayer? Mod the network layer. Want different graphics? Mod the renderer. Want blockchain integration? Mod the state system. The architecture doesn't care what you build—it just gives you the tools and gets out of your way. This is how all software should be built: transparent, modifiable, and yours.</p>
         
-        <h2>🤝 Contributing</h2>
-        <p>We welcome contributions from anyone who believes in the vision of sovereign software!</p>
+        <h2 id="contributing">🤝 Contributing & Sharing Your Mods</h2>
+        <p>We welcome contributions from anyone who believes in the vision of sovereign software! The best way to share your creations with the community is to add them to the engine as official presets.</p>
+
+        <h3>How to Submit Your Mod</h3>
+        <p>If you've created a cool Weapon, Rule, Player, or Control mod that you want to share, you can submit it to be included in the main repository via a GitHub Pull Request. Here is the process:</p>
+        <ol>
+            <li><strong>Finalize Your Code:</strong> Perfect your mod in the in-game editor. Once you're happy with it, copy the entire function.</li>
+            <li><strong>Create a Mod File:</strong>
+                <ul>
+                    <li><strong>Fork the repository</strong> on GitHub.</li>
+                    <li>In your fork, navigate to the appropriate <code>mods/</code> subdirectory (e.g., <code>mods/weapons/</code>, <code>mods/rules/</code>).</li>
+                    <li>Create a new <code>.js</code> file for your mod. The filename should be descriptive, like <code>laser-beam.js</code> or <code>survival-mode.js</code>.</li>
+                    <li>Paste your code into this new file.</li>
+                </ul>
+            </li>
+            <li><strong>Update the Manifest:</strong>
+                <ul>
+                    <li>Open the <code>mods/mod-manifest.json</code> file.</li>
+                    <li>Add a new entry for your mod in the correct category. The key is the name that will appear in the dropdown, and the value is the path to your new file.
+                        <pre><code>// Example for a new weapon in mods/mod-manifest.json
+"weapon": {
+  "Pistol (Default)": "mods/weapons/pistol.js",
+  "Shotgun": "mods/weapons/shotgun.js",
+  "Your Awesome Mod": "mods/weapons/your-awesome-mod.js"
+},</code></pre>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Submit a Pull Request:</strong>
+                <ul>
+                    <li>Commit your changes (the new <code>.js</code> file and the modified <code>mod-manifest.json</code>).</li>
+                    <li>Push the changes to your fork.</li>
+                    <li>Open a Pull Request from your fork to the main <code>sovereign-engine</code> repository.</li>
+                    <li>In the PR description, briefly explain what your mod does.</li>
+                </ul>
+            </li>
+        </ol>
+        <p>We'll review your submission, and if it's a good fit, we'll merge it. Your creation will then be a built-in preset for everyone to enjoy!</p>
+
+        <h3>Other Contributions</h3>
         <ul>
-            <li><strong>Fork the repository:</strong> Start by forking sovereign-engine on GitHub.</li>
-            <li><strong>Create your mods:</strong> Experiment, hack, and create new game mechanics, characters, or rules.</li>
-            <li><strong>Share your creations:</strong> Submit pull requests with your new mods (ideally in the <code>mods/</code> directory following the suggested community mod format) or showcase your forks in our community channels.</li>
             <li><strong>Improve the engine:</strong> Found a bug? Have an idea for a core engine improvement? Open an issue or submit a pull request!</li>
+            <li><strong>Showcase your fork:</strong> If you've made major changes or created a completely new game, share a link to your fork in our community channels!</li>
         </ul>
         
         <h2>📄 License</h2>

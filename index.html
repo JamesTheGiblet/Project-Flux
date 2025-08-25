@@ -345,6 +345,14 @@
 		padding: 4px 8px;
 		cursor: pointer;
 	}
+	.share-btn {
+		background: #0088cc;
+		color: #fff;
+		border: none;
+		padding: 4px 8px;
+		cursor: pointer;
+		margin-left: 5px;
+	}
 	.execute-btn:hover {
 		background: #88ffff;
 		box-shadow: 0 0 8px rgba(0, 255, 255, 0.7);
@@ -611,6 +619,7 @@ player.color = '#ffff00';</code></pre>
                 <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="weaponPresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -622,6 +631,7 @@ player.color = '#ffff00';</code></pre>
                  <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="rulePresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -633,6 +643,7 @@ player.color = '#ffff00';</code></pre>
                  <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="playerPresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -644,6 +655,7 @@ player.color = '#ffff00';</code></pre>
                 <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="controlPresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -655,6 +667,7 @@ player.color = '#ffff00';</code></pre>
                 <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="lifePresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -665,6 +678,7 @@ player.color = '#ffff00';</code></pre>
                 <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="seedPresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -676,6 +690,7 @@ player.color = '#ffff00';</code></pre>
                 <div class="save-preset-area">
                     <input type="text" class="preset-name-input" id="bossAIPresetName" placeholder="Save as new preset...">
                     <button class="save-btn">💾 Save</button>
+                    <button class="share-btn" title="Learn how to share this mod with the community">🌐 Share</button>
                 </div>
             </div>
 
@@ -1311,6 +1326,14 @@ player.color = '#ffff00';</code></pre>
 
 			// Add listener for the hack button
 			document.querySelector('.execute-btn').addEventListener('click', executeHack);
+
+			// Add listeners for the new share buttons
+			document.querySelectorAll('.share-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					// Open the documentation page to the contributing section
+					window.open('README.html#contributing', '_blank');
+				});
+			});
 
             // Select and apply default mods on startup
 			// We must await the preset selection to ensure the code is loaded before we apply it.

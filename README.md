@@ -259,17 +259,47 @@ The complete documentation and our detailed future roadmap are available for pur
 
 👉 **Get the Full Documentation & Roadmap on our Website**
 
-## 🤝 Contributing
+## 🤝 Contributing & Sharing Your Mods
 
-We welcome contributions from anyone who believes in the vision of sovereign software!
+We welcome contributions from anyone who believes in the vision of sovereign software! The best way to share your creations with the community is to add them to the engine as official presets.
 
-    Fork the repository: Start by forking sovereign-engine on GitHub.
+### How to Submit Your Mod
 
-    Create your mods: Experiment, hack, and create new game mechanics, characters, or rules.
+If you've created a cool Weapon, Rule, Player, or Control mod that you want to share, you can submit it to be included in the main repository via a GitHub Pull Request. Here is the process:
 
-    Share your creations: Submit pull requests with your new mods (ideally in the mods/ directory following the suggested community mod format) or showcase your forks in our community channels.
+1. **Finalize Your Code:** Perfect your mod in the in-game editor. Once you're happy with it, copy the entire function.
 
-    Improve the engine: Found a bug? Have an idea for a core engine improvement? Open an issue or submit a pull request!
+2. **Create a Mod File:**
+    - **Fork the repository** on GitHub.
+    - In your fork, navigate to the appropriate `mods/` subdirectory (e.g., `mods/weapons/`, `mods/rules/`).
+    - Create a new `.js` file for your mod. The filename should be descriptive, like `laser-beam.js` or `survival-mode.js`.
+    - Paste your code into this new file.
+
+3. **Update the Manifest:**
+    - Open the `mods/mod-manifest.json` file.
+    - Add a new entry for your mod in the correct category. The key is the name that will appear in the dropdown, and the value is the path to your new file.
+
+    ```json
+    // Example for a new weapon in mods/mod-manifest.json
+    "weapon": {
+      "Pistol (Default)": "mods/weapons/pistol.js",
+      "Shotgun": "mods/weapons/shotgun.js",
+      "Your Awesome Mod": "mods/weapons/your-awesome-mod.js"
+    },
+    ```
+
+4. **Submit a Pull Request:**
+    - Commit your changes (the new `.js` file and the modified `mod-manifest.json`).
+    - Push the changes to your fork.
+    - Open a Pull Request from your fork to the main `sovereign-engine` repository.
+    - In the PR description, briefly explain what your mod does.
+
+We'll review your submission, and if it's a good fit, we'll merge it. Your creation will then be a built-in preset for everyone to enjoy!
+
+### Other Contributions
+
+- **Improve the engine:** Found a bug? Have an idea for a core engine improvement? Open an issue or submit a pull request!
+- **Showcase your fork:** If you've made major changes or created a completely new game, share a link to your fork in our community channels!
 
 ## 📄 License
 
