@@ -4,11 +4,22 @@
         "Shotgun": "mods/weapons/shotgun.js"
     },
     "rule": {
-        "Standard Spawner (Default)": "mods/rules/default-spawner.js",
+        "Level Progression (Default)": "mods/rules/level-progression.js",
+        "Endless Spawner": "mods/rules/default-spawner.js",
         "Horde Mode": "mods/rules/horde-mode.js"
     },
     "player": {
         "Standard (Default)": "mods/player/default-player.js",
         "Glass Cannon": "mods/player/glass-cannon.js"
+    },
+    "control": {
+        "Default (WASD Move, Mouse Shoot)": "controls/default-controls.js",
+        "Twin-Stick (Mouse Move, WASD Shoot)": "controls/twin-stick.js"
+    },
+    "life": {
+        "Points-Based (Default)": "mods/health/points-based.js"
+    },
+    "bossAI": {
+        "Standard Patterns (Default)": "mods/enemies/default-boss-ai.js"
     }
 }

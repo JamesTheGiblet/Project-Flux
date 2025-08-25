@@ -18,6 +18,8 @@ class SovereignEngine {
         this.lastShotTime = 0;
         this.keys = {};
         this.mousePos = { x: 0, y: 0 };
+        this.musicScheduler = null;
+        this.musicGainNode = null;
         this.audioContext = null; // Initialized on first user interaction to comply with browser policies.
 
 		// --- GAME STATE ---
@@ -112,6 +114,74 @@ class SovereignEngine {
         }
     }
     
+    playBackgroundMusic() {
+        if (!this.audioContext || this.audioContext.state === 'closed' || this.musicScheduler) return;
+
+        // Master gain node for music to control volume and allow fading out.
+        this.musicGainNode = this.audioContext.createGain();
+        this.musicGainNode.gain.setValueAtTime(0.12, this.audioContext.currentTime); // Set music volume
+        this.musicGainNode.connect(this.audioContext.destination);
+
+        // A simple, moody C-minor synth progression
+        const progression = [
+            { freq: 130.81, duration: 2 }, // C3
+            { freq: 196.00, duration: 2 }, // G3
+            { freq: 207.65, duration: 2 }, // Ab3
+            { freq: 155.56, duration: 2 }, // Eb3
+        ];
+        let progressionIndex = 0;
+        const tempo = 120; // bpm
+        const beatDuration = 60 / tempo; // 0.5s per beat
+
+        const playNextArpeggio = () => {
+            if (!this.musicGainNode) return; // Stop if music has been told to stop
+            const note = progression[progressionIndex % progression.length];
+            // Arpeggio: Root, 5th, Octave, 5th
+            const arpeggioNotes = [note.freq, note.freq * 1.5, note.freq * 2, note.freq * 1.5]; 
+            
+            for (let i = 0; i < 4; i++) { // 4 beats per bass note
+                const time = this.audioContext.currentTime + i * beatDuration;
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.musicGainNode); // Connect to the master music gain node
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(arpeggioNotes[i], time);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(600, time);
+                filter.Q.setValueAtTime(8, time);
+
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(0.8, time + 0.02); // Note volume (relative to master)
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + beatDuration);
+
+                osc.start(time);
+                osc.stop(time + beatDuration);
+            }
+
+            progressionIndex++;
+            // Schedule the next bass note change
+            this.musicScheduler = setTimeout(playNextArpeggio, note.duration * 1000);
+        };
+
+        playNextArpeggio();
+    }
+
+    stopBackgroundMusic() {
+        if (this.musicScheduler) clearTimeout(this.musicScheduler);
+        this.musicScheduler = null;
+        if (this.musicGainNode) {
+            const time = this.audioContext.currentTime;
+            this.musicGainNode.gain.exponentialRampToValueAtTime(0.0001, time + 0.5);
+            this.musicGainNode = null; // Set to null so scheduler stops
+        }
+    }
+
     setSeed(seed) {
         this.seed = seed;
         this.currentSeed = seed;
@@ -316,6 +386,30 @@ class SovereignEngine {
         osc1.stop(time + 0.6);
         osc2.start(time);
         osc2.stop(time + 0.6);
+    }
+
+    playSpecialSound() {
+        if (!this.audioContext || this.audioContext.state === 'closed') return;
+        const time = this.audioContext.currentTime;
+        const osc1 = this.audioContext.createOscillator();
+        const osc2 = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc1.type = 'triangle';
+        osc2.type = 'sine';
+        gain.gain.setValueAtTime(0.4, time);
+        osc1.frequency.setValueAtTime(220, time); // A3
+        osc2.frequency.setValueAtTime(220 * 1.5, time); // E4
+        osc1.frequency.linearRampToValueAtTime(880, time + 1); // A5
+        osc2.frequency.linearRampToValueAtTime(880 * 1.5, time + 1); // E6
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 1.2);
+        osc1.start(time);
+        osc1.stop(time + 1.2);
+        osc2.start(time);
+        osc2.stop(time + 1.2);
     }
 
     playDeathSound() {
@@ -628,6 +722,12 @@ class SovereignEngine {
                 const dx = this.player.x - proj.x;
                 const dy = this.player.y - proj.y;
                 if (Math.sqrt(dx*dx + dy*dy) < this.player.size + proj.size) {
+                    if (this.player.invincible) {
+                        proj.life = 0; // Destroy projectile
+                        this.spawnParticles(proj.x, proj.y, { color: '#FFD700', count: 5 });
+                        return; // Skip to next projectile, no damage taken
+                    }
+
                     const damage = proj.damage || 10;
                     if (this.player.shield && this.player.shield > 0) {
                         this.player.shield -= damage;
@@ -696,6 +796,16 @@ class SovereignEngine {
             const dx = this.player.x - enemy.x;
             const dy = this.player.y - enemy.y;
             if (Math.sqrt(dx*dx + dy*dy) < this.player.size + enemy.size) {
+                if (this.player.invincible) {
+                    enemy.health = 0; // Destroy enemy on contact
+                    this.score += enemy.scoreValue || 10;
+                    this.spawnParticles(enemy.x, enemy.y, { color: '#FFD700', count: 15, speed: {min: 50, max: 200} });
+                    this.playExplosionSound();
+                    this.comboTimer = this.comboMaxTime; // Refresh combo
+                    this.comboCount++;
+                    return; // Skip to next enemy
+                }
+
                 if (this.player.shield && this.player.shield > 0) {
                     this.player.shield -= 20;
                     if (this.player.shieldRegenRate) { 

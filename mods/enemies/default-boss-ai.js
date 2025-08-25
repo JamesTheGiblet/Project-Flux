@@ -1,5 +1,23 @@
-const bossAIPresets = {
-    default: `function updateBossAI(boss, dt, engine) {
+/**
+ * @typedef {import('../../engine.js').SovereignEngine} SovereignEngine
+ */
+
+/**
+ * This function defines the behavior for a boss enemy. It's a state machine that switches between different attack patterns.
+ * The editor might show an "Identifier expected" error on the line below because this file contains only a function expression.
+ * This is correct, as the engine loads this code as a string and evaluates it. The error can be safely ignored.
+ *
+ * @param {object} boss The boss enemy object.
+ * @param {number} boss.x The boss's position on the x-axis.
+ * @param {number} boss.y The boss's position on the y-axis.
+ * @param {number} boss.vx The boss's velocity on the x-axis.
+ * @param {number} boss.vy The boss's velocity on the y-axis.
+ * @param {string[]} boss.patterns A list of available attack patterns (e.g., 'spiral_shot', 'charge').
+ * @param {string} boss.currentPattern The name of the currently active pattern.
+ * @param {number} dt The delta time since the last frame, in seconds.
+ * @param {SovereignEngine} engine The main game engine instance, providing access to projectiles, player data, and helper functions.
+ */
+function(boss, dt, engine) {
     // This function defines how the boss behaves based on its current pattern.
     // It's called for each boss every frame.
 
@@ -84,19 +102,5 @@ const bossAIPresets = {
                 boss.attackTimer = Math.max(0.8, 2.5 - (engine.level * 0.1));
             }
             break;
-
-        default: // 'chase' (fallback or simple movement)
-            const dx = engine.player.x - boss.x;
-            const dy = engine.player.y - boss.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist > 150) { // Keep some distance
-                boss.vx = (dx/dist) * engine.enemySpeed * 0.4;
-                boss.vy = (dy/dist) * engine.enemySpeed * 0.4;
-            } else {
-                boss.vx = 0;
-                boss.vy = 0;
-            }
-            break;
     }
-}`
-};
+}
