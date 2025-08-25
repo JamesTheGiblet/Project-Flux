@@ -1,6 +1,18 @@
 function modifyPlayer(player) {
-    // High speed, but fragile
-    player.speed = player.baseSpeed * 1.5;
-    player.maxHealth = 50;
-    player.health = 50; // Set current health as well
+    // A fast, high-damage character with low health.
+    player.maxHealth = 60;
+    player.health = 60;
+    player.baseSpeed = 240;
+    player.speed = 240;
+    player.color = '#ff88ff';
+    player.size = 6;
+    player.fireRate = 7;
+    player.damageMultiplier = 1.75;
+    player.sprite = [
+        [0, 1, 0],
+        [1, 2, 1],
+        [1, 1, 1],
+        [1, 0, 1]
+    ];
+    player.spriteColors = ['#ff88ff', '#ffffff'];
 }

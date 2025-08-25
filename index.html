@@ -606,7 +606,7 @@ player.color = '#ffff00';</code></pre>
 
             <div class="mod-section">
                 <h3>🔫 WEAPON MOD</h3>
-                <select id="weaponSelector" title="Select weapon mod preset" onchange="selectPreset('weapon', this.value)"></select>
+                <select id="weaponSelector" title="Select weapon mod preset"></select>
                 <textarea class="code-editor" id="weaponCode" placeholder="Write or modify weapon code here..."></textarea>
                 <button class="apply-btn" onclick="applyMod('weapon')">Apply Weapon</button>
                 <div class="save-preset-area">
@@ -617,7 +617,7 @@ player.color = '#ffff00';</code></pre>
 
             <div class="mod-section">
                 <h3>🎮 RULES MOD</h3>
-                <select id="ruleSelector" title="Select rule mod preset" onchange="selectPreset('rule', this.value)"></select>
+                <select id="ruleSelector" title="Select rule mod preset"></select>
                 <textarea class="code-editor" id="ruleCode" placeholder="Write or modify game rules here..."></textarea>
                 <button class="apply-btn" onclick="applyMod('rule')">Apply Rules</button>
                  <div class="save-preset-area">
@@ -628,7 +628,7 @@ player.color = '#ffff00';</code></pre>
 
             <div class="mod-section">
                 <h3>🧍 PLAYER MOD</h3>
-                <select id="playerSelector" title="Select player mod preset" onchange="selectPreset('player', this.value)"></select>
+                <select id="playerSelector" title="Select player mod preset"></select>
                 <textarea class="code-editor" id="playerCode" placeholder="Write or modify player properties here..."></textarea>
                 <button class="apply-btn" onclick="applyMod('player')">Apply Player</button>
                  <div class="save-preset-area">
@@ -639,7 +639,7 @@ player.color = '#ffff00';</code></pre>
 
             <div class="mod-section">
                 <h3>🕹️ CONTROL MOD</h3>
-                <select id="controlSelector" title="Select control scheme preset" onchange="selectPreset('control', this.value)"></select>
+                <select id="controlSelector" title="Select control scheme preset"></select>
                 <textarea class="code-editor" id="controlCode" placeholder="Write or modify control scheme here..."></textarea>
                 <button class="apply-btn" onclick="applyMod('control')">Apply Controls</button>
                 <div class="save-preset-area">
@@ -650,7 +650,7 @@ player.color = '#ffff00';</code></pre>
 
             <div class="mod-section">
                 <h3>❤️ LIFE MOD</h3>
-                <select id="lifeSelector" title="Select life mod preset" onchange="selectPreset('life', this.value)"></select>
+                <select id="lifeSelector" title="Select life mod preset"></select>
                 <textarea class="code-editor" id="lifeCode" placeholder="Write or modify life gain rules here..."></textarea>
                 <button class="apply-btn" onclick="applyMod('life')">Apply Life Rules</button>
                 <div class="save-preset-area">
@@ -671,7 +671,7 @@ player.color = '#ffff00';</code></pre>
 
             <div class="mod-section">
                 <h3>👾 BOSS AI MOD</h3>
-                <select id="bossAISelector" title="Select boss AI preset" onchange="selectPreset('bossAI', this.value)"></select>
+                <select id="bossAISelector" title="Select boss AI preset"></select>
                 <textarea class="code-editor" id="bossAICode" placeholder="Write or modify boss AI here..."></textarea>
                 <button class="apply-btn" onclick="applyMod('bossAI')">Apply Boss AI</button>
                 <div class="save-preset-area">
@@ -693,14 +693,13 @@ player.color = '#ffff00';</code></pre>
     </div>
 
     <script src="engine.js"></script> <!-- Core engine remains in root -->
-    <script src="mods/weapons/weapons.js"></script>
-    <script src="mods/rules/rules.js"></script>
-    <script src="mods/player/player.js"></script>
+    <!-- The mod preset files below are now loaded via mod-loader.js and the manifest -->
     <script src="controls/controls.js"></script>
     <script src="mods/health/life.js"></script>
     <script src="mods/enemies/boss-ai.js"></script>
     <script src="mods/power-ups/power-ups.js"></script>
-    <script>
+    <script type="module">
+		import { loadModManifest, loadModCode } from './mod-loader.js';
         // --- MOD SYSTEM ---
 
 		let audioCtx;
@@ -813,24 +812,58 @@ player.color = '#ffff00';</code></pre>
             }
         }
 
-        function selectPreset(modType, presetName) {
+		async function selectPreset(modType, presetName) {
             const element = document.getElementById(`${modType}Code`);
             const presets = game.allPresets[modType];
-            if (presets && presets[presetName]) { 
-                element.value = presets[presetName]; 
+			const manifestModTypes = ['weapon', 'rule', 'player'];
+
+			if (presets && presets[presetName] !== undefined) {
+				let presetValue = presets[presetName];
+
+				// Check if it's a path that needs to be loaded from the manifest.
+				// We identify it by checking if it's a string ending in '.js'.
+				// This distinguishes it from already-loaded code or custom presets.
+				if (manifestModTypes.includes(modType) && typeof presetValue === 'string' && presetValue.endsWith('.js')) {
+					element.value = `// Loading ${presetName}...`;
+					const fetchedCode = await loadModCode(presetValue); // presetValue is the path
+					if (fetchedCode) {
+						// Update the preset value in our store from path to actual code for caching
+						presets[presetName] = fetchedCode;
+						element.value = fetchedCode;
+					} else {
+						element.value = `// Failed to load mod from: ${presetValue}`;
+					}
+				} else {
+					// It's already code (from localStorage or an old global preset)
+					element.value = presetValue;
+				}
             }
         }
 
-        function initializeModSystem() {
+		async function initializeModSystem() {
             game.allPresets = { weapon: {}, rule: {}, player: {}, control: {}, life: {}, bossAI: {}, seed: {} };
-            const defaultPresets = { weapon: weaponPresets, rule: rulesPresets, player: playerPresets, control: controlPresets, life: lifePresets, bossAI: bossAIPresets, seed: { default: '12345' } };
+
+			// Fetch presets that are now defined in the manifest
+			const manifestPresets = await loadModManifest() || {};
+
+			// The other presets are still loaded from global variables for now
+			const defaultPresets = {
+				weapon: manifestPresets.weapon || {},
+				rule: manifestPresets.rule || {},
+				player: manifestPresets.player || {},
+				control: controlPresets,
+				life: lifePresets,
+				bossAI: bossAIPresets,
+				seed: { 'default': '12345' }
+			};
 
             for (const modType in game.allPresets) {
-                // Seed mod doesn't have a selector dropdown
-                if (modType === 'seed') continue;
-
                 const customMods = JSON.parse(localStorage.getItem(`sovereign_${modType}_mods`)) || {};
+				// The value for manifest types will be a path, for others it's the code itself.
+				// This distinction is handled by the updated `selectPreset` function.
                 game.allPresets[modType] = { ...defaultPresets[modType], ...customMods };
+
+				if (modType === 'seed') continue; // Seed mod doesn't have a selector dropdown
 
                 const selector = document.getElementById(`${modType}Selector`);
                 selector.innerHTML = ''; // Clear dropdown
@@ -838,18 +871,15 @@ player.color = '#ffff00';</code></pre>
                 for (const presetName in game.allPresets[modType]) {
                     const option = document.createElement('option');
                     option.value = presetName;
-                    const isCustom = !defaultPresets[modType].hasOwnProperty(presetName);
-                    option.textContent = isCustom ? `[C] ${presetName}` : presetName.charAt(0).toUpperCase() + presetName.slice(1);
+					const isCustom = !defaultPresets[modType] || !defaultPresets[modType].hasOwnProperty(presetName);
+                    option.textContent = isCustom ? `[C] ${presetName}` : presetName;
                     selector.appendChild(option);
                 }
             }
-            // Handle seed preset loading separately as it uses an input, not a select
-            const seedCustomMods = JSON.parse(localStorage.getItem(`sovereign_seed_mods`)) || {};
-            game.allPresets.seed = { ...defaultPresets.seed, ...seedCustomMods };
         }
 
         let game;
-        window.onload = function() {
+        window.onload = async function() {
             game = new SovereignEngine();
 
 			// --- HIGH SCORE & LEADERBOARD SYSTEM ---
@@ -1205,16 +1235,29 @@ player.color = '#ffff00';</code></pre>
 				});
 
 			}
-            initializeModSystem();
+			await initializeModSystem();
+
+			// Programmatically add event listeners now that the inline onchange attributes are removed
+			const modTypesWithSelectors = ['weapon', 'rule', 'player', 'control', 'life', 'bossAI'];
+			modTypesWithSelectors.forEach(modType => {
+				const selector = document.getElementById(`${modType}Selector`);
+				if (selector) {
+					selector.addEventListener('change', (e) => selectPreset(modType, e.target.value));
+				}
+			});
 
             // Select and apply default mods on startup
-            selectPreset('weapon', 'default');
-            selectPreset('player', 'default');
-            selectPreset('control', 'twin-stick');
-            selectPreset('rule', 'level-progression');
-            selectPreset('life', 'points-based');
-            selectPreset('seed', 'default'); // Load default seed into input
-            selectPreset('bossAI', 'default');
+			// We must await the preset selection to ensure the code is loaded before we apply it.
+            await selectPreset('weapon', 'Pistol (Default)');
+            await selectPreset('player', 'Standard (Default)');
+			await selectPreset('rule', 'Standard Spawner (Default)');
+			// These presets are not loaded from the manifest, so they are not async
+			selectPreset('control', 'twin-stick');
+			selectPreset('life', 'points-based');
+			selectPreset('seed', 'default'); // Load default seed into input
+			selectPreset('bossAI', 'default');
+
+			applyMod('weapon');
             applyMod('player');
             applyMod('control');
             applyMod('life');

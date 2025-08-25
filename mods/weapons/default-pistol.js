@@ -10,7 +10,9 @@ function shoot(player, target, engine) {
         y: player.y,
         vx: (dx / magnitude) * bulletSpeed,
         vy: (dy / magnitude) * bulletSpeed,
-        damage: 10 * player.damageMultiplier,
+        size: 3,
+        color: '#00ff88',
+        damage: 25 * player.damageMultiplier,
         life: 2
     });
 }
