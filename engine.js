@@ -620,6 +620,11 @@ class SovereignEngine {
 
         // Enemy AI
         this.enemies.forEach(enemy => {
+            // If enemy is frozen, skip all movement and AI logic
+            if (enemy.isFrozen) {
+                return;
+            }
+
             if (enemy.isBoss) {
                 this.bossAIUpdate(enemy, dt, this); // Call the modded boss AI
             } else if (enemy.ai_type === 'shooter') {

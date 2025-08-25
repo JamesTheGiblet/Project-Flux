@@ -71,6 +71,50 @@ const powerUpTypes = {
         },
         remove: (player, engine) => {
             delete player.shieldRegenRate;
+            delete player.shieldRegenDelay;
+            delete player.lastShieldDamageTime;
+            delete player.maxShield;
+        }
+    },
+    freeze: {
+        color: '#00aaff', // Blue color for ice/freeze
+        symbol: '❄', // Snowflake symbol
+        duration: 5, // Freeze enemies for 5 seconds
+        apply: function(player, engine) {
+            engine.enemies.forEach(enemy => {
+                // Store original state before freezing
+                enemy._originalVx = enemy.vx;
+                enemy._originalVy = enemy.vy;
+                enemy._originalSpeed = enemy.speed;
+                enemy._originalColor = enemy.color;
+                enemy._originalSpriteColors = enemy.spriteColors ? [...enemy.spriteColors] : null;
+
+                // Apply frozen state
+                enemy.vx = 0;
+                enemy.vy = 0;
+                enemy.speed = 0;
+                enemy.isFrozen = true; // Flag to indicate enemy is frozen
+                enemy.color = '#00aaff'; // Change color to blue
+                enemy.spriteColors = ['#00aaff', '#00ffff']; // Blue/cyan for frozen sprite
+            });
+            if (engine.playSpecialSound) engine.playSpecialSound(); // Play a sound when activated
+        },
+        remove: function(player, engine) {
+            engine.enemies.forEach(enemy => {
+                // Restore original state if it was frozen by this effect
+                if (enemy.isFrozen && enemy._originalVx !== undefined) {
+                    enemy.vx = enemy._originalVx;
+                    enemy.vy = enemy._originalVy;
+                    enemy.speed = enemy._originalSpeed;
+                    enemy.color = enemy._originalColor;
+                    enemy.spriteColors = enemy._originalSpriteColors;
+                    delete enemy.isFrozen; // Remove the frozen flag
+                    // Clean up temporary properties
+                    delete enemy._originalVx; delete enemy._originalVy; delete enemy._originalSpeed;
+                    delete enemy._originalColor; delete enemy._originalSpriteColors;
+                }
+            });
+            // No specific sound for unfreeze, or you could add a subtle one
         }
     }
 };
